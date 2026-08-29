@@ -134,5 +134,35 @@ const loginUser = asyncHandler( async (req , res) => {
 
 });
 
+const getCurrentUser = asyncHandler(async (req , res) => {
 
-module.exports = {registerUser , loginUser};
+    const user = req.user;
+
+    const userData = {
+
+        id: user._id,
+
+        name: user.name,
+
+        email: user.email,
+
+        role: user.role,
+
+        avatar: user.avatar,
+
+        createdAt: user.createdAt
+
+    };
+
+
+    res.status(200).json(
+        new ApiResponse(
+            200,
+            userData,
+            "Current user fetched successfully"
+        )
+    );
+
+})
+
+module.exports = {registerUser , loginUser , getCurrentUser};
