@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Projects from "./pages/Projects";
 
 
 function App() {
@@ -39,7 +40,16 @@ function App() {
                                 <Dashboard />
                         </AppLayout>
                     }
-                />
+                    />
+
+                    <Route
+                        path="/projects"
+                        element={
+                            <AppLayout>
+                                <Projects />
+                            </AppLayout>
+                        }
+                    />
 
                 </Route>
 

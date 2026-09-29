@@ -9,6 +9,8 @@ import {
     X
 } from "lucide-react";
 
+import { NavLink } from "react-router-dom";
+
 const Sidebar = ({
     isOpen,
     onClose
@@ -17,27 +19,33 @@ const Sidebar = ({
     const navigation = [
         {
             label: "Overview",
-            icon: LayoutDashboard
+            icon: LayoutDashboard,
+            path: "/"
         },
         {
             label: "Projects",
-            icon: FolderKanban
+            icon: FolderKanban,
+            path: "/projects"
         },
         {
             label: "My Tasks",
-            icon: CheckSquare
+            icon: CheckSquare,
+            path: "/tasks"
         },
         {
             label: "Time Tracking",
-            icon: Clock3
+            icon: Clock3,
+            path: "/time-tracking"
         },
         {
             label: "Reports",
-            icon: BarChart3
+            icon: BarChart3,
+            path: "/reports"
         },
         {
             label: "Team",
-            icon: Users
+            icon: Users,
+            path: "/team"
         }
     ];
 
@@ -126,7 +134,7 @@ const Sidebar = ({
 
                 {/* Navigation */}
 
-                <nav className="flex-1 px-4">
+                {/* <nav className="flex-1 px-4">
 
                     <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                         Workspace
@@ -159,6 +167,53 @@ const Sidebar = ({
                                     {item.label}
 
                                 </button>
+                            );
+
+                        })}
+
+                    </div>
+
+                </nav> */}
+
+                {/* Navigation */}
+
+                <nav className="flex-1 px-4">
+
+                    <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                        Workspace
+                    </p>
+
+                    <div className="space-y-1">
+
+                        {navigation.map((item) => {
+
+                            const Icon = item.icon;
+
+                            return (
+
+                                <NavLink
+                                    key={item.label}
+                                    to={item.path}
+                                    onClick={onClose}
+                                    className={({ isActive }) => `
+                                        flex w-full items-center gap-3
+                                        rounded-xl px-3 py-2.5
+                                        text-sm font-medium
+                                        transition-colors
+                                        ${
+                                            isActive
+                                                ? "bg-slate-900 text-white shadow-sm shadow-slate-200"
+                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        }
+                                    `}
+                                >
+
+                                    <Icon size={18} />
+
+                                    {item.label}
+
+                                </NavLink>
+
                             );
 
                         })}

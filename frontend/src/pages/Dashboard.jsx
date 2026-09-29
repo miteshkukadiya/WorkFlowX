@@ -9,35 +9,112 @@ import {
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 
+import { useEffect, useState } from "react";
+
+import { projectService } from "../services/projectService";
+
 const Dashboard = () => {
+
+
+    const [projects, setProjects] = useState([]);
+    const [projectsLoading, setProjectsLoading] = useState(true);
+
+    useEffect(() => {
+
+        const loadProjects = async () => {
+
+            try {
+
+                const data = await projectService.getAll();
+
+                setProjects(data);
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to fetch dashboard projects:",
+                    error
+                );
+
+            } finally {
+
+                setProjectsLoading(false);
+
+            }
+        };
+
+        loadProjects();
+
+    }, []);
+
+
+    // ===================================
+    // REAL PROJECT STATISTICS
+    // ===================================
+
+    // Total projects
+    const totalProjects = projects.length;
+
+    // Active projects
+    const activeProjects = projects.filter(
+        (project) => project.status === "active"
+    ).length;
+
+    // Completed projects
+    const completedProjects = projects.filter(
+        (project) => project.status === "completed"
+    ).length;
+
+
+    // ===================================
+    // DASHBOARD CARDS
+    // ===================================
 
     const stats = [
         {
             title: "Total Projects",
-            value: "12",
-            change: "+2 this month",
+
+            value: projectsLoading
+                ? "..."
+                : totalProjects,
+
+            change: `${activeProjects} active projects`,
+
             icon: FolderKanban
         },
+
         {
             title: "My Tasks",
+
             value: "24",
-            change: "8 due this week",
+
+            change: "Demo data",
+
             icon: ListTodo
         },
+
         {
-            title: "Completed",
-            value: "68%",
-            change: "+12% from last week",
+            title: "Completed Projects",
+
+            value: projectsLoading
+                ? "..."
+                : completedProjects,
+
+            change: "Successfully completed",
+
             icon: CheckCircle2
         },
+
         {
             title: "Tracked Hours",
+
             value: "32.5h",
-            change: "+4.2h this week",
+
+            change: "Demo data",
+
             icon: Clock3
         }
     ];
-
 
     return (
         <div className="space-y-6 lg:space-y-8">

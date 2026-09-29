@@ -1,8 +1,10 @@
-const express = require("express");
-const cors = require("cors");
-const errorMiddleware = require("./middleware/errorMiddleware");
-const ApiError = require("./utils/ApiError");
-const authRoutes = require("./routes/authRoutes");
+import express from "express";
+import cors from "cors";
+import errorMiddleware from "./middleware/errorMiddleware.js";
+import authRoutes from "./routes/authRoutes.js";
+import ApiError from "./utils/ApiError.js";
+import projectRoutes from "./routes/project.routes.js";
+
 
 const app = express();
 
@@ -15,4 +17,9 @@ app.use("/api/v1/auth" , authRoutes);
 // error handler
 app.use(errorMiddleware);
 
-module.exports = app;
+app.use(
+    "/api/v1/projects",
+    projectRoutes
+);
+
+export default app;
