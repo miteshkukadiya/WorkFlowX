@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Projects from "./pages/Projects";
+import Tasks from "./pages/Tasks";
 
 
 function App() {
@@ -47,6 +48,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <Projects />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/tasks"
+                        element={
+                            <AppLayout>
+                                <Tasks />
                             </AppLayout>
                         }
                     />

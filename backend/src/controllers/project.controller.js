@@ -56,6 +56,7 @@ export const getProjects = async (req , res) => {
         })
 
             .populate("owner", "name email")
+            .populate("members", "name email")
             .sort({ createdAt: -1 });
 
             return res.status(200).json({
