@@ -6,8 +6,12 @@ import {
     BarChart3,
     Users,
     Settings,
-    X
+    X,
+    ListTodo,
+    Columns3
 } from "lucide-react";
+
+
 
 import { NavLink } from "react-router-dom";
 
@@ -27,6 +31,11 @@ const Sidebar = ({
             icon: FolderKanban,
             path: "/projects"
         },
+        {
+            label: "Kanban Board",
+            icon: Columns3,
+            path: "/kanban"
+        }, 
         {
             label: "My Tasks",
             icon: CheckSquare,

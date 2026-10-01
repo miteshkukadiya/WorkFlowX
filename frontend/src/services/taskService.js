@@ -41,6 +41,39 @@ export const taskService = {
         return response.data.data;
     },
 
+    reorder: async (
+        projectId,
+        tasks
+    ) => {
+
+        const response = await api.patch(
+            "/tasks/reorder",
+            {
+                projectId,
+                tasks
+            }
+        );
+
+        return response.data;
+    },
+
+    move: async (
+        id,
+        status,
+        position
+    ) => {
+
+        const response = await api.patch(
+            `/tasks/${id}/move`,
+            {
+                status,
+                position
+            }
+        );
+
+        return response.data.data;
+    },
+
     delete: async (id) => {
 
         const response = await api.delete(
@@ -49,5 +82,7 @@ export const taskService = {
 
         return response.data;
     }
+
+
 
 };

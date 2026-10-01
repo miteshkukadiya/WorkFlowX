@@ -5,7 +5,9 @@ import {
     getTasks,
     getTaskById,
     updateTask,
-    deleteTask
+    deleteTask,
+    moveTask,
+    reorderTasks
 } from "../controllers/task.controller.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -18,6 +20,16 @@ router
     .route("/")
     .post(createTask)
     .get(getTasks);
+
+router.patch(
+    "/reorder",
+    reorderTasks
+);
+
+router.patch(
+    "/:id/move",
+    moveTask
+);
 
 router
     .route("/:id")

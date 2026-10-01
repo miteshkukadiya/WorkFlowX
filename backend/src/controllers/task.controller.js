@@ -223,6 +223,8 @@ export const getTasks = async (req, res) => {
             .populate("assignedTo", "name email")
             .populate("createdBy", "name email")
             .sort({
+                status: 1,
+                position: 1,
                 createdAt: -1
             });
 
@@ -503,6 +505,563 @@ export const deleteTask = async (req, res) => {
             success: true,
             message: "Task deleted successfully"
         });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+export const moveTask = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+
+        const {
+            status,
+            position
+        } = req.body;
+
+
+        // VALIDATE TASK ID
+
+        if (!mongoose.isValidObjectId(id)) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Invalid task ID"
+            });
+
+        }
+
+
+        // VALIDATE STATUS
+
+        const allowedStatuses = [
+            "todo",
+            "in-progress",
+            "done"
+        ];
+
+        if (!allowedStatuses.includes(status)) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Invalid task status"
+            });
+
+        }
+
+
+        // VALIDATE POSITION
+
+        const parsedPosition = Number(position);
+
+        if (
+            !Number.isFinite(parsedPosition) ||
+            parsedPosition < 0
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Invalid task position"
+            });
+
+        }
+
+
+        // FIND TASK
+
+        const task = await Task.findById(id);
+
+        if (!task) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Task not found"
+            });
+
+        }
+
+
+        // FIND PROJECT
+
+        const project = await Project.findById(
+            task.project
+        );
+
+        if (!project) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Project not found"
+            });
+
+        }
+
+
+        // CHECK PERMISSION
+
+        const isOwner =
+            String(project.owner) ===
+            String(req.user._id);
+
+        const isAssignedUser =
+            task.assignedTo &&
+            String(task.assignedTo) ===
+            String(req.user._id);
+
+
+        if (!isOwner && !isAssignedUser) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "You do not have permission to move this task"
+            });
+
+        }
+
+
+        // UPDATE
+
+        task.status = status;
+
+        task.position = parsedPosition;
+
+        await task.save();
+
+
+        const updatedTask = await Task.findById(
+            task._id
+        )
+            .populate(
+                "project",
+                "name color owner"
+            )
+            .populate(
+                "assignedTo",
+                "name email"
+            );
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Task moved successfully",
+
+            data: updatedTask
+
+        });
+
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+// export const reorderTasks = async (req, res) => {
+
+//     try {
+
+//         const {
+//             projectId,
+//             tasks
+//         } = req.body;
+
+
+//         if (
+//             !mongoose.isValidObjectId(
+//                 projectId
+//             )
+//         ) {
+
+//             return res.status(400).json({
+//                 success: false,
+//                 message:
+//                     "Invalid project ID"
+//             });
+
+//         }
+
+
+//         if (
+//             !Array.isArray(tasks) ||
+//             tasks.length === 0
+//         ) {
+
+//             return res.status(400).json({
+//                 success: false,
+//                 message:
+//                     "Tasks array is required"
+//             });
+
+//         }
+
+
+//         const project =
+//             await Project.findById(
+//                 projectId
+//             );
+
+
+//         if (!project) {
+
+//             return res.status(404).json({
+//                 success: false,
+//                 message:
+//                     "Project not found"
+//             });
+
+//         }
+
+
+//         const hasAccess =
+
+//             String(project.owner) ===
+//             String(req.user._id)
+
+//             ||
+
+//             project.members.some(
+//                 (member) =>
+//                     String(member) ===
+//                     String(req.user._id)
+//             );
+
+
+//         if (!hasAccess) {
+
+//             return res.status(403).json({
+//                 success: false,
+//                 message:
+//                     "Project access denied"
+//             });
+
+//         }
+
+
+//         const allowedStatuses = [
+//             "todo",
+//             "in-progress",
+//             "done"
+//         ];
+
+
+//         const operations = [];
+
+
+//         for (
+//             let index = 0;
+//             index < tasks.length;
+//             index++
+//         ) {
+
+//             const item = tasks[index];
+
+
+//             if (
+//                 !mongoose.isValidObjectId(
+//                     item._id
+//                 )
+//             ) {
+
+//                 return res.status(400).json({
+//                     success: false,
+//                     message:
+//                         "Invalid task ID"
+//                 });
+
+//             }
+
+
+//             if (
+//                 !allowedStatuses.includes(
+//                     item.status
+//                 )
+//             ) {
+
+//                 return res.status(400).json({
+//                     success: false,
+//                     message:
+//                         "Invalid task status"
+//                 });
+
+//             }
+
+
+//             operations.push({
+
+//                 updateOne: {
+
+//                     filter: {
+//                         _id: item._id,
+//                         project: projectId
+//                     },
+
+//                     update: {
+//                         $set: {
+//                             status:
+//                                 item.status,
+
+//                             position:
+//                                 index
+//                         }
+//                     }
+
+//                 }
+
+//             });
+
+//         }
+
+
+//         await Task.bulkWrite(
+//             operations
+//         );
+
+
+//         return res.status(200).json({
+
+//             success: true,
+
+//             message:
+//                 "Task order updated successfully"
+
+//         });
+
+
+//     } catch (error) {
+
+//         return res.status(500).json({
+//             success: false,
+//             message: error.message
+//         });
+
+//     }
+
+// };
+
+export const reorderTasks = async (req, res) => {
+
+    try {
+
+        const {
+            projectId,
+            tasks
+        } = req.body;
+
+
+        // VALIDATE PROJECT ID
+
+        if (
+            !mongoose.isValidObjectId(
+                projectId
+            )
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Invalid project ID"
+            });
+
+        }
+
+
+        // VALIDATE TASKS ARRAY
+
+        if (
+            !Array.isArray(tasks) ||
+            tasks.length === 0
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Tasks array is required"
+            });
+
+        }
+
+
+        // FIND PROJECT
+
+        const project =
+            await Project.findById(
+                projectId
+            );
+
+
+        if (!project) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Project not found"
+            });
+
+        }
+
+
+        // ALLOWED TASK STATUSES
+
+        const allowedStatuses = [
+            "todo",
+            "in-progress",
+            "done"
+        ];
+
+
+        const operations = [];
+
+
+        // VALIDATE EVERY TASK
+
+        for (
+            let index = 0;
+            index < tasks.length;
+            index++
+        ) {
+
+            const item = tasks[index];
+
+
+            // VALIDATE TASK ID
+
+            if (
+                !mongoose.isValidObjectId(
+                    item._id
+                )
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid task ID"
+                });
+
+            }
+
+
+            // VALIDATE STATUS
+
+            if (
+                !allowedStatuses.includes(
+                    item.status
+                )
+            ) {
+
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid task status"
+                });
+
+            }
+
+
+            // FIND TASK FROM SAME PROJECT
+
+            const existingTask =
+                await Task.findOne({
+                    _id: item._id,
+                    project: projectId
+                });
+
+
+            if (!existingTask) {
+
+                return res.status(404).json({
+                    success: false,
+                    message: "Task not found"
+                });
+
+            }
+
+
+            // CHECK PERMISSION
+
+            const isOwner =
+                String(project.owner) ===
+                String(req.user._id);
+
+
+            const isAssignee =
+                existingTask.assignedTo &&
+                String(existingTask.assignedTo) ===
+                String(req.user._id);
+
+
+            if (!isOwner && !isAssignee) {
+
+                return res.status(403).json({
+                    success: false,
+                    message:
+                        "You cannot move this task"
+                });
+
+            }
+
+
+            // PREPARE DATABASE UPDATE
+
+            operations.push({
+
+                updateOne: {
+
+                    filter: {
+                        _id: item._id,
+                        project: projectId
+                    },
+
+                    update: {
+
+                        $set: {
+
+                            status:
+                                item.status,
+
+                            position:
+                                index
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        }
+
+
+        // UPDATE ALL TASK POSITIONS
+
+        await Task.bulkWrite(
+            operations
+        );
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Task order updated successfully"
+
+        });
+
 
     } catch (error) {
 
