@@ -219,7 +219,7 @@ export const getTasks = async (req, res) => {
         }
 
         const tasks = await Task.find(filter)
-            .populate("project", "name color")
+            .populate("project", "name color owner")
             .populate("assignedTo", "name email")
             .populate("createdBy", "name email")
             .sort({

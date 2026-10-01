@@ -15,6 +15,7 @@ import Register from "./pages/Register";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import KanbanBoard from "./pages/KanbanBoard";
+import TimeTracking from "./pages/TimeTracking";
 
 
 function App() {
@@ -67,6 +68,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <KanbanBoard />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/time-tracking"
+                        element={
+                            <AppLayout>
+                                <TimeTracking />
                             </AppLayout>
                         }
                     />

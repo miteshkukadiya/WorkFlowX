@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import ApiError from "./utils/ApiError.js";
 import projectRoutes from "./routes/project.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+import timeEntryRoutes from "./routes/timeEntry.routes.js";
 
 
 const app = express();
@@ -26,6 +27,11 @@ app.use(
 app.use(
     "/api/v1/tasks",
     taskRoutes
-)
+);
+
+app.use(
+    "/api/v1/time",
+    timeEntryRoutes
+);
 
 export default app;
