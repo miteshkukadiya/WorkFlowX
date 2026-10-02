@@ -6,6 +6,10 @@ import {
     FolderKanban
 } from "lucide-react";
 
+import {
+    Link
+} from "react-router-dom";
+
 const priorityStyles = {
     low: "bg-slate-100 text-slate-600",
     medium: "bg-blue-50 text-blue-700",
@@ -80,9 +84,18 @@ export default function TaskCard({
 
             </div>
 
-            <h3 className="mt-4 text-lg font-semibold text-slate-900">
+            <Link
+                to={`/tasks/${task._id}`}
+                className="
+                    font-semibold
+                    text-slate-900
+                    hover:text-indigo-600
+                "
+            >
+
                 {task.title}
-            </h3>
+
+            </Link>
 
             <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-5 text-slate-500">
                 {task.description || "No description provided."}

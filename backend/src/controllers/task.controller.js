@@ -4,6 +4,8 @@ import Task from "../models/Task.js";
 
 import Project from "../models/Project.js";
 
+import logActivity from "../utils/logActivity.js";
+
 
 // CHECK PROJECT ACCESS
 
@@ -137,11 +139,32 @@ export const createTask = async (req, res) => {
             .populate("assignedTo", "name email")
             .populate("createdBy", "name email");
 
+        await logActivity({
+
+            task:
+                task._id,
+
+            project:
+                project._id,
+
+            user:
+                req.user._id,
+
+            action:
+                "task_created",
+
+            message:
+                "created this task"
+
+        });
+
         return res.status(201).json({
             success: true,
             message: "Task created successfully",
             data: populatedTask
         });
+
+        
 
     } catch (error) {
 
@@ -342,6 +365,14 @@ export const updateTask = async (req, res) => {
 
         }
 
+        const oldStatus = task.status;
+
+        const oldPriority = task.priority;
+
+        const oldAssignee = task.assignedTo
+            ? String(task.assignedTo)
+            : null;
+
         const isOwner =
             String(project.owner) === String(req.user._id);
 
@@ -434,6 +465,93 @@ export const updateTask = async (req, res) => {
         }
 
         await task.save();
+
+        // LOG STATUS CHANGE
+
+        if (oldStatus !== task.status) {
+
+            await logActivity({
+
+                task: task._id,
+
+                project: project._id,
+
+                user: req.user._id,
+
+                action: "status_changed",
+
+                message:
+                    `changed status from ${oldStatus} to ${task.status}`,
+
+                metadata: {
+                    oldValue: oldStatus,
+                    newValue: task.status
+                }
+
+            });
+
+        }
+
+
+        // LOG PRIORITY CHANGE
+
+        if (oldPriority !== task.priority) {
+
+            await logActivity({
+
+                task: task._id,
+
+                project: project._id,
+
+                user: req.user._id,
+
+                action: "priority_changed",
+
+                message:
+                    `changed priority from ${oldPriority} to ${task.priority}`,
+
+                metadata: {
+                    oldValue: oldPriority,
+                    newValue: task.priority
+                }
+
+            });
+
+        }
+
+
+        // LOG ASSIGNEE CHANGE
+
+        const newAssignee = task.assignedTo
+            ? String(task.assignedTo)
+            : null;
+
+
+        if (oldAssignee !== newAssignee) {
+
+            await logActivity({
+
+                task: task._id,
+
+                project: project._id,
+
+                user: req.user._id,
+
+                action: "assignee_changed",
+
+                message:
+                    newAssignee
+                        ? "changed task assignee"
+                        : "removed task assignee",
+
+                metadata: {
+                    oldValue: oldAssignee,
+                    newValue: newAssignee
+                }
+
+            });
+
+        }
 
         const updatedTask = await Task.findById(task._id)
             .populate("project", "name color")
@@ -590,6 +708,8 @@ export const moveTask = async (req, res) => {
 
         }
 
+        const oldStatus = task.status;
+
 
         // FIND PROJECT
 
@@ -637,6 +757,32 @@ export const moveTask = async (req, res) => {
         task.position = parsedPosition;
 
         await task.save();
+
+        // LOG STATUS CHANGE
+
+        if (oldStatus !== status) {
+
+            await logActivity({
+
+                task: task._id,
+
+                project: project._id,
+
+                user: req.user._id,
+
+                action: "status_changed",
+
+                message:
+                    `moved task from ${oldStatus} to ${status}`,
+
+                metadata: {
+                    oldValue: oldStatus,
+                    newValue: status
+                }
+
+            });
+
+        }
 
 
         const updatedTask = await Task.findById(
