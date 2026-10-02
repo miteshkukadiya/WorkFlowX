@@ -9,6 +9,7 @@ import timeEntryRoutes from "./routes/timeEntry.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import activityRoutes from "./routes/activity.routes.js";
+import attachmentRoutes from "./routes/attachment.routes.js";
 
 
 const app = express();
@@ -50,6 +51,11 @@ app.use(
 app.use(
     "/api/v1/activities",
     activityRoutes
+);
+
+app.use(
+    "/api/v1/attachments",
+    attachmentRoutes
 );
 
 export default app;

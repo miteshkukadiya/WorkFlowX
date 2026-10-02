@@ -1,2 +1,5 @@
 backend/node_modules/
 backend/.env
+
+uploads/tasks/*
+!uploads/tasks/.gitkeep

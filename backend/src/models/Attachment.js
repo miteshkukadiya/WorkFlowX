@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 
-const activitySchema =
+const attachmentSchema =
     new mongoose.Schema(
         {
             task: {
@@ -18,38 +18,36 @@ const activitySchema =
                 index: true
             },
 
-            user: {
+            uploadedBy: {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "User",
                 required: true
             },
 
-            action: {
-                type: String,
-                required: true,
-                enum: [
-                    "task_created",
-                    "status_changed",
-                    "priority_changed",
-                    "assignee_changed",
-                    "title_changed",
-                    "comment_added",
-                    "comment_deleted",
-
-                    "attachment_added",
-                    "attachment_deleted"
-                ]
-            },
-
-            message: {
+            originalName: {
                 type: String,
                 required: true,
                 trim: true
             },
 
-            metadata: {
-                type: mongoose.Schema.Types.Mixed,
-                default: {}
+            storedName: {
+                type: String,
+                required: true
+            },
+
+            mimeType: {
+                type: String,
+                required: true
+            },
+
+            size: {
+                type: Number,
+                required: true
+            },
+
+            path: {
+                type: String,
+                required: true
             }
         },
         {
@@ -58,17 +56,17 @@ const activitySchema =
     );
 
 
-activitySchema.index({
+attachmentSchema.index({
     task: 1,
     createdAt: -1
 });
 
 
-const Activity =
+const Attachment =
     mongoose.model(
-        "Activity",
-        activitySchema
+        "Attachment",
+        attachmentSchema
     );
 
 
-export default Activity;
+export default Attachment;

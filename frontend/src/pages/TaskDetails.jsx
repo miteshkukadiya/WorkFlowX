@@ -40,6 +40,10 @@ import CommentsSection
 import ActivityTimeline
     from "../components/activity/ActivityTimeline";
 
+import {attachmentService} from "../services/attachmentService";
+
+import AttachmentsSection from "../components/attachments/AttachmentsSection";
+
 
 export default function TaskDetails() {
 
@@ -64,6 +68,8 @@ export default function TaskDetails() {
     const [loading, setLoading] =
         useState(true);
 
+    const [ attachments, setAttachments ] = useState([]);
+
     const [error, setError] =
         useState("");
 
@@ -80,7 +86,8 @@ export default function TaskDetails() {
                 const [
                     taskData,
                     commentData,
-                    activityData
+                    activityData,
+                    attachmentData
                 ] = await Promise.all([
 
                     taskService.getById(
@@ -93,6 +100,10 @@ export default function TaskDetails() {
 
                     activityService.getByTask(
                         id
+                    ),
+
+                    attachmentService.getByTask(
+                        id
                     )
 
                 ]);
@@ -101,6 +112,7 @@ export default function TaskDetails() {
                 setTask(taskData);
                 setComments(commentData);
                 setActivities(activityData);
+                setAttachments(attachmentData);
 
 
             } catch (err) {
@@ -192,6 +204,22 @@ export default function TaskDetails() {
     const isProjectOwner =
         currentUserId ===
         projectOwnerId;
+
+
+    const refreshActivities = async () => {
+
+        const data =
+            await activityService
+                .getByTask(
+                    task._id
+                );
+
+
+        setActivities(
+            data
+        );
+
+    };
 
 
     return (
@@ -393,19 +421,7 @@ export default function TaskDetails() {
                         isProjectOwner
                     }
                     onActivityRefresh={
-                        async () => {
-
-                            const data =
-                                await activityService
-                                    .getByTask(
-                                        task._id
-                                    );
-
-                            setActivities(
-                                data
-                            );
-
-                        }
+                       refreshActivities
                     }
                 />
 
@@ -413,6 +429,25 @@ export default function TaskDetails() {
                 <ActivityTimeline
                     activities={
                         activities
+                    }
+                />
+
+                <AttachmentsSection
+                    taskId={task._id}
+                    attachments={
+                        attachments
+                    }
+                    setAttachments={
+                        setAttachments
+                    }
+                    currentUserId={
+                        currentUserId
+                    }
+                    isProjectOwner={
+                        isProjectOwner
+                    }
+                    onActivityRefresh={
+                        refreshActivities
                     }
                 />
 
