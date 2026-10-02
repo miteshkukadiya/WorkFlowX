@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
 import Project from "../models/Project.js";
+import User from "../models/User.js";
+import Task from "../models/Task.js";
 
 export const createProject = async (req , res) => {
 
@@ -55,8 +57,8 @@ export const getProjects = async (req , res) => {
             ]
         })
 
-            .populate("owner", "name email")
-            .populate("members", "name email")
+            .populate("owner", "name email role")
+            .populate("members", "name email role")
             .sort({ createdAt: -1 });
 
             return res.status(200).json({
@@ -231,3 +233,433 @@ export const deleteProject = async (req, res) => {
         });
     }
 };
+
+
+export const addProjectMember = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            id
+        } = req.params;
+
+        const {
+            userId
+        } = req.body;
+
+
+        // VALIDATE PROJECT
+
+        if (
+            !mongoose.isValidObjectId(id)
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid project ID"
+            });
+
+        }
+
+
+        // VALIDATE USER
+
+        if (
+            !mongoose.isValidObjectId(
+                userId
+            )
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid user ID"
+            });
+
+        }
+
+
+        const project =
+            await Project.findById(id);
+
+
+        if (!project) {
+
+            return res.status(404).json({
+                success: false,
+                message:
+                    "Project not found"
+            });
+
+        }
+
+
+        // ONLY OWNER CAN ADD MEMBER
+
+        if (
+            String(project.owner) !==
+            String(req.user._id)
+        ) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Only project owner can add members"
+            });
+
+        }
+
+
+        // CANNOT ADD OWNER
+
+        if (
+            String(project.owner) ===
+            String(userId)
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Project owner is already part of the project"
+            });
+
+        }
+
+
+        const user =
+            await User.findById(
+                userId
+            ).select(
+                "_id name email role"
+            );
+
+
+        if (!user) {
+
+            return res.status(404).json({
+                success: false,
+                message:
+                    "User not found"
+            });
+
+        }
+
+
+        const alreadyMember =
+            project.members.some(
+                (member) =>
+                    String(member) ===
+                    String(userId)
+            );
+
+
+        if (alreadyMember) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "User is already a project member"
+            });
+
+        }
+
+
+        project.members.push(
+            userId
+        );
+
+
+        await project.save();
+
+
+        const updatedProject =
+            await Project.findById(id)
+
+                .populate(
+                    "owner",
+                    "name email role"
+                )
+
+                .populate(
+                    "members",
+                    "name email role"
+                );
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Member added successfully",
+
+            data: updatedProject
+
+        });
+
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+export const getProjectMembers = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            id
+        } = req.params;
+
+
+        if (
+            !mongoose.isValidObjectId(id)
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid project ID"
+            });
+
+        }
+
+
+        const project =
+            await Project.findById(id)
+
+                .populate(
+                    "owner",
+                    "name email role"
+                )
+
+                .populate(
+                    "members",
+                    "name email role"
+                );
+
+
+        if (!project) {
+
+            return res.status(404).json({
+                success: false,
+                message:
+                    "Project not found"
+            });
+
+        }
+
+
+        const isOwner =
+            String(project.owner._id) ===
+            String(req.user._id);
+
+
+        const isMember =
+            project.members.some(
+                (member) =>
+                    String(member._id) ===
+                    String(req.user._id)
+            );
+
+
+        if (!isOwner && !isMember) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Project access denied"
+            });
+
+        }
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            data: {
+
+                owner:
+                    project.owner,
+
+                members:
+                    project.members
+
+            }
+
+        });
+
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+
+export const removeProjectMember = async (
+    req,
+    res
+) => {
+
+    try {
+
+        const {
+            id,
+            userId
+        } = req.params;
+
+
+        if (
+            !mongoose.isValidObjectId(id) ||
+            !mongoose.isValidObjectId(
+                userId
+            )
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Invalid project or user ID"
+            });
+
+        }
+
+
+        const project =
+            await Project.findById(id);
+
+
+        if (!project) {
+
+            return res.status(404).json({
+                success: false,
+                message:
+                    "Project not found"
+            });
+
+        }
+
+
+        if (
+            String(project.owner) !==
+            String(req.user._id)
+        ) {
+
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Only project owner can remove members"
+            });
+
+        }
+
+
+        const memberExists =
+            project.members.some(
+                (member) =>
+                    String(member) ===
+                    String(userId)
+            );
+
+
+        if (!memberExists) {
+
+            return res.status(404).json({
+                success: false,
+                message:
+                    "Project member not found"
+            });
+
+        }
+
+
+        project.members =
+            project.members.filter(
+                (member) =>
+                    String(member) !==
+                    String(userId)
+            );
+
+
+        await project.save();
+
+
+        /*
+         * Remove assignment from tasks
+         * assigned to this member.
+         *
+         * IMPORTANT:
+         * Task must already be imported.
+         */
+
+        await Task.updateMany(
+            {
+                project: project._id,
+                assignedTo: userId
+            },
+            {
+                $set: {
+                    assignedTo: null
+                }
+            }
+        );
+
+
+        const updatedProject =
+            await Project.findById(id)
+
+                .populate(
+                    "owner",
+                    "name email role"
+                )
+
+                .populate(
+                    "members",
+                    "name email role"
+                );
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Member removed successfully",
+
+            data: updatedProject
+
+        });
+
+
+    } catch (error) {
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+

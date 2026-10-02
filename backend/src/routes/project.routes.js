@@ -5,7 +5,10 @@ import {
     getProjects,
     getProjectById,
     updateProject,
-    deleteProject
+    deleteProject,
+    addProjectMember,
+    getProjectMembers,
+    removeProjectMember
 } from "../controllers/project.controller.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -18,6 +21,23 @@ router
     .route("/")
     .post(createProject)
     .get(getProjects);
+
+router.get(
+    "/:id/members",
+    getProjectMembers
+);
+
+
+router.post(
+    "/:id/members",
+    addProjectMember
+);
+
+
+router.delete(
+    "/:id/members/:userId",
+    removeProjectMember
+);
 
 router
     .route("/:id")
