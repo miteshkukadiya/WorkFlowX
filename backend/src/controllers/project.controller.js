@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
 import Task from "../models/Task.js";
+import createNotification from "../utils/createNotification.js";
 
 export const createProject = async (req , res) => {
 
@@ -374,6 +375,28 @@ export const addProjectMember = async (
 
 
         await project.save();
+
+        await createNotification({
+
+            recipient:
+                userId,
+
+            sender:
+                req.user._id,
+
+            type:
+                "project_member_added",
+
+            title:
+                "Added to project",
+
+            message:
+                `You were added to ${project.name}`,
+
+            project:
+                project._id
+
+        });
 
 
         const updatedProject =

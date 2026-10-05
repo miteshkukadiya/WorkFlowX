@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 
-import Comment
-    from "../models/Comment.js";
+import Comment  from "../models/Comment.js";
 
-import getTaskAccess
-    from "../utils/getTaskAccess.js";
+import getTaskAccess from "../utils/getTaskAccess.js";
 
-import logActivity
-    from "../utils/logActivity.js";
+import logActivity  from "../utils/logActivity.js";
+
+import createNotification from "../utils/createNotification.js";
 
 
 export const addComment = async (
@@ -119,6 +118,56 @@ export const addComment = async (
                 "added a comment"
 
         });
+
+        // COMMENT NOTIFICATION
+        let notificationRecipient =
+            access.task.assignedTo;
+
+
+        // If assignee itself commented,
+        // send notification to task creator
+        if (
+            notificationRecipient &&
+            String(notificationRecipient) ===
+            String(req.user._id)
+        ) {
+
+            notificationRecipient =
+                access.task.createdBy;
+
+        }
+
+
+        // CREATE NOTIFICATION
+        if (notificationRecipient) {
+
+            await createNotification({
+
+                recipient:
+                    notificationRecipient,
+
+                sender:
+                    req.user._id,
+
+                type:
+                    "comment_added",
+
+                title:
+                    "New task comment",
+
+                message:
+                    `New comment on "${access.task.title}"`,
+
+                project:
+                    access.project._id,
+
+                task:
+                    access.task._id
+
+            });
+
+        }
+
 
 
         return res.status(201).json({

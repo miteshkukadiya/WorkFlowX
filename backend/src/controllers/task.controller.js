@@ -6,6 +6,8 @@ import Project from "../models/Project.js";
 
 import logActivity from "../utils/logActivity.js";
 
+import createNotification from "../utils/createNotification.js";
+
 
 // CHECK PROJECT ACCESS
 
@@ -157,6 +159,29 @@ export const createTask = async (req, res) => {
                 "created this task"
 
         });
+
+        if (task.assignedTo) {
+
+            await createNotification({
+
+                recipient: task.assignedTo,
+
+                sender: req.user._id,
+
+                type: "task_assigned",
+
+                title: "New task assigned",
+
+                message:
+                    `You were assigned "${task.title}"`,
+
+                project: task.project,
+
+                task: task._id
+
+            });
+
+        }
 
         return res.status(201).json({
             success: true,
@@ -468,6 +493,32 @@ export const updateTask = async (req, res) => {
 
         // LOG STATUS CHANGE
 
+        // if (oldStatus !== task.status) {
+
+        //     await logActivity({
+
+        //         task: task._id,
+
+        //         project: project._id,
+
+        //         user: req.user._id,
+
+        //         action: "status_changed",
+
+        //         message:
+        //             `changed status from ${oldStatus} to ${task.status}`,
+
+        //         metadata: {
+        //             oldValue: oldStatus,
+        //             newValue: task.status
+        //         }
+
+        //     });
+
+        // }
+
+        // LOG STATUS CHANGE
+
         if (oldStatus !== task.status) {
 
             await logActivity({
@@ -487,6 +538,33 @@ export const updateTask = async (req, res) => {
                     oldValue: oldStatus,
                     newValue: task.status
                 }
+
+            });
+
+
+            // NOTIFY PROJECT OWNER ABOUT STATUS CHANGE
+            await createNotification({
+
+                recipient:
+                    project.owner,
+
+                sender:
+                    req.user._id,
+
+                type:
+                    "task_status_changed",
+
+                title:
+                    "Task status updated",
+
+                message:
+                    `"${task.title}" moved from ${oldStatus} to ${task.status}`,
+
+                project:
+                    project._id,
+
+                task:
+                    task._id
 
             });
 
@@ -522,6 +600,39 @@ export const updateTask = async (req, res) => {
 
         // LOG ASSIGNEE CHANGE
 
+        // const newAssignee = task.assignedTo
+        //     ? String(task.assignedTo)
+        //     : null;
+
+
+        // if (oldAssignee !== newAssignee) {
+
+        //     await logActivity({
+
+        //         task: task._id,
+
+        //         project: project._id,
+
+        //         user: req.user._id,
+
+        //         action: "assignee_changed",
+
+        //         message:
+        //             newAssignee
+        //                 ? "changed task assignee"
+        //                 : "removed task assignee",
+
+        //         metadata: {
+        //             oldValue: oldAssignee,
+        //             newValue: newAssignee
+        //         }
+
+        //     });
+
+        // }
+
+        // LOG ASSIGNEE CHANGE
+
         const newAssignee = task.assignedTo
             ? String(task.assignedTo)
             : null;
@@ -550,6 +661,31 @@ export const updateTask = async (req, res) => {
                 }
 
             });
+
+
+            // NOTIFY NEW ASSIGNEE
+            if (newAssignee) {
+
+                await createNotification({
+
+                    recipient: newAssignee,
+
+                    sender: req.user._id,
+
+                    type: "task_assigned",
+
+                    title: "Task assigned to you",
+
+                    message:
+                        `You were assigned "${task.title}"`,
+
+                    project: task.project,
+
+                    task: task._id
+
+                });
+
+            }
 
         }
 
@@ -760,6 +896,32 @@ export const moveTask = async (req, res) => {
 
         // LOG STATUS CHANGE
 
+        // if (oldStatus !== status) {
+
+        //     await logActivity({
+
+        //         task: task._id,
+
+        //         project: project._id,
+
+        //         user: req.user._id,
+
+        //         action: "status_changed",
+
+        //         message:
+        //             `moved task from ${oldStatus} to ${status}`,
+
+        //         metadata: {
+        //             oldValue: oldStatus,
+        //             newValue: status
+        //         }
+
+        //     });
+
+        // }
+
+        // LOG STATUS CHANGE
+
         if (oldStatus !== status) {
 
             await logActivity({
@@ -779,6 +941,33 @@ export const moveTask = async (req, res) => {
                     oldValue: oldStatus,
                     newValue: status
                 }
+
+            });
+
+
+            // NOTIFY PROJECT OWNER ABOUT KANBAN STATUS CHANGE
+            await createNotification({
+
+                recipient:
+                    project.owner,
+
+                sender:
+                    req.user._id,
+
+                type:
+                    "task_status_changed",
+
+                title:
+                    "Task status updated",
+
+                message:
+                    `"${task.title}" moved from ${oldStatus} to ${status}`,
+
+                project:
+                    project._id,
+
+                task:
+                    task._id
 
             });
 

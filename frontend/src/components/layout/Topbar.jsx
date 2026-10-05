@@ -9,6 +9,12 @@ import { useNavigate } from "react-router-dom";
 
 import {useAuth} from "../../context/AuthContext";
 
+import { useEffect, useRef, useState } from "react";
+
+import { useNotifications } from "../../context/NotificationContext";
+import NotificationDropdown from "../notifications/NotificationDropdown";
+
+
 
 
 const Topbar = ({
@@ -18,6 +24,52 @@ const Topbar = ({
     const {user , logout} = useAuth();
 
     const navigate = useNavigate();
+
+    const [ notificationOpen,  setNotificationOpen ]  = useState(false);
+    const notificationRef = useRef(null);
+    const { unreadCount } = useNotifications();
+
+
+    useEffect(() => {
+
+        const handleOutsideClick = (
+            event
+        ) => {
+
+            if (
+                notificationRef.current &&
+                !notificationRef.current
+                    .contains(
+                        event.target
+                    )
+            ) {
+
+                setNotificationOpen(
+                    false
+                );
+
+            }
+
+        };
+
+
+        document.addEventListener(
+            "mousedown",
+            handleOutsideClick
+        );
+
+
+        return () => {
+
+            document.removeEventListener(
+                "mousedown",
+                handleOutsideClick
+            );
+
+        };
+
+    }, []);
+
 
     const handleLogout = async () => {
         try {
@@ -67,13 +119,84 @@ const Topbar = ({
 
             <div className="flex shrink-0 items-center gap-1 sm:gap-3">
 
-                <button aria-label="View notifications" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
+                {/* <button aria-label="View notifications" className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900">
 
                     <Bell size={19} />
 
                     <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
 
-                </button>
+                </button> */}
+
+                <div
+                    ref={notificationRef}
+                    className="relative"
+                >
+
+                    <button
+                        aria-label="View notifications"
+                        onClick={() =>
+                            setNotificationOpen(
+                                (previous) =>
+                                    !previous
+                            )
+                        }
+                        className="
+                            relative
+                            rounded-xl
+                            p-2.5
+                            text-slate-500
+                            transition
+                            hover:bg-slate-100
+                            hover:text-slate-900
+                        "
+                    >
+
+                        <Bell size={20} />
+
+
+                        {unreadCount > 0 && (
+
+                            <span className="
+                                absolute
+                                -right-1
+                                -top-1
+                                flex
+                                min-h-[18px]
+                                min-w-[18px]
+                                items-center
+                                justify-center
+                                rounded-full
+                                bg-rose-500
+                                px-1
+                                text-[10px]
+                                font-bold
+                                text-white
+                            ">
+
+                                {unreadCount > 99
+                                    ? "99+"
+                                    : unreadCount}
+
+                            </span>
+
+                        )}
+
+                    </button>
+
+
+                    {notificationOpen && (
+
+                        <NotificationDropdown
+                            onClose={() =>
+                                setNotificationOpen(
+                                    false
+                                )
+                            }
+                        />
+
+                    )}
+
+                </div>
 
 
                 <div className="flex items-center gap-3 border-l border-slate-200 pl-3">
