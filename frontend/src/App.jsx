@@ -18,6 +18,7 @@ import KanbanBoard from "./pages/KanbanBoard";
 import TimeTracking from "./pages/TimeTracking";
 import Team from "./pages/Team";
 import TaskDetails from "./pages/TaskDetails";
+import Reports from "./pages/Reports";
 
 
 function App() {
@@ -97,6 +98,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <TaskDetails />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/reports"
+                        element={
+                            <AppLayout>
+                                <Reports />
                             </AppLayout>
                         }
                     />
