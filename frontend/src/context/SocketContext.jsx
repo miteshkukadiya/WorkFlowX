@@ -50,7 +50,7 @@ export const SocketProvider = ({ children }) => {
         const handleConnect = () => {
             setConnected(true);
             console.log("Socket connected");
-            console.log("Socket ID:", socketInstance.id);
+            // console.log("Socket ID:", socketInstance.id);
         };
 
         const handleDisconnect = () => {

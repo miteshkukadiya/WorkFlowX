@@ -37,7 +37,7 @@ const Sidebar = ({
             path: "/kanban"
         }, 
         {
-            label: "My Tasks",
+            label: "All Tasks",
             icon: CheckSquare,
             path: "/tasks"
         },

@@ -53,7 +53,7 @@ export const initializeSocket = (httpServer) => {
     io.on("connection", (socket) => {
         const userId = String(socket.user._id);
 
-        console.log("Socket connected:", socket.id);
+        // console.log("Socket connected:", socket.id);
 
         // Private room for this user
         socket.join(`user:${userId}`);

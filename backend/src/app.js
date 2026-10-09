@@ -13,6 +13,9 @@ import attachmentRoutes from "./routes/attachment.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import reportRoutes from "./routes/report.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import taskSearchRoutes from "./routes/taskSearch.routes.js";
+import savedViewRoutes from "./routes/savedView.routes.js";
+
 
 
 const app = express();
@@ -29,6 +32,12 @@ app.use(
     "/api/v1/projects",
     projectRoutes
 );
+
+app.use(
+        "/api/v1/tasks/search", 
+        taskSearchRoutes
+    );
+
 
 app.use(
     "/api/v1/tasks",
@@ -73,6 +82,11 @@ app.use(
 app.use(
     "/api/v1/dashboard",
     dashboardRoutes
+);
+
+app.use(
+    "/api/v1/saved-views", 
+    savedViewRoutes
 );
 
 // error handler

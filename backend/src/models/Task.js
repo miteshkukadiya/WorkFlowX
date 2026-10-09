@@ -77,12 +77,18 @@ const taskSchema = new mongoose.Schema(
 
 taskSchema.index({
     project: 1,
+    createdAt: -1
+});
+
+taskSchema.index({
+    project: 1,
     status: 1,
     position: 1
 });
 
 taskSchema.index({
-    assignedTo: 1
+    assignedTo: 1,
+    dueDate: 1
 });
 
 const Task = mongoose.model(

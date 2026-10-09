@@ -19,6 +19,7 @@ import TimeTracking from "./pages/TimeTracking";
 import Team from "./pages/Team";
 import TaskDetails from "./pages/TaskDetails";
 import Reports from "./pages/Reports";
+import AllTasks from "./pages/AllTasks";
 
 
 function App() {
@@ -57,11 +58,20 @@ function App() {
                         }
                     />
 
-                    <Route
+                    {/* <Route
                         path="/tasks"
                         element={
                             <AppLayout>
                                 <Tasks />
+                            </AppLayout>
+                        }
+                    /> */}
+
+                    <Route
+                        path="/tasks"
+                        element={
+                            <AppLayout>
+                                <AllTasks />
                             </AppLayout>
                         }
                     />
@@ -110,6 +120,7 @@ function App() {
                             </AppLayout>
                         }
                     />
+
 
                 </Route>
 
