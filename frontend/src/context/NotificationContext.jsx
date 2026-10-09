@@ -6,26 +6,25 @@ import {
     useState
 } from "react";
 
-import {
-    notificationService
-} from "../services/notificationService";
+import { notificationService } from "../services/notificationService";
 
-import {
-    useAuth
-} from "./AuthContext";
+import { useSocket } from "./SocketContext";
 
 
-const NotificationContext =
-    createContext(null);
+
+import { useAuth } from "./AuthContext";
+
+
+const NotificationContext = createContext(null);
 
 
 export const NotificationProvider = ({
     children
 }) => {
 
-    const {
-        user
-    } = useAuth();
+    const { user } = useAuth();
+
+    const { socket } = useSocket();
 
 
     const [
@@ -100,12 +99,46 @@ export const NotificationProvider = ({
 
         }, [user]);
 
-
     useEffect(() => {
+    if (!socket) return;
 
+    const handleNewNotification = () => {
         loadNotifications();
+    };
 
-    }, [loadNotifications]);
+    const handleReconnect = () => {
+        loadNotifications();
+    };
+
+    socket.on(
+        "notification:new",
+        handleNewNotification
+    );
+
+    socket.on(
+        "connect",
+        handleReconnect
+    );
+
+    return () => {
+        socket.off(
+            "notification:new",
+            handleNewNotification
+        );
+
+        socket.off(
+            "connect",
+            handleReconnect
+        );
+    };
+}, [socket, loadNotifications]);
+
+
+    // useEffect(() => {
+
+    //     loadNotifications();
+
+    // }, [loadNotifications]);
 
 
     const markAsRead =

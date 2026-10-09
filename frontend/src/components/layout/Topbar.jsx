@@ -14,6 +14,8 @@ import { useEffect, useRef, useState } from "react";
 import { useNotifications } from "../../context/NotificationContext";
 import NotificationDropdown from "../notifications/NotificationDropdown";
 
+import { useSocket } from "../../context/SocketContext";
+
 
 
 
@@ -22,6 +24,9 @@ const Topbar = ({
 }) => {
 
     const {user , logout} = useAuth();
+    const { connected } = useSocket();
+
+    console.log("Socket connected state:", connected);
 
     const navigate = useNavigate();
 
@@ -126,6 +131,24 @@ const Topbar = ({
                     <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
 
                 </button> */}
+
+                {/* SOCKET CONNECTION STATUS */}
+
+                <div className="hidden items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 sm:flex">
+
+                    <span
+                        className={`h-2 w-2 rounded-full ${
+                            connected
+                                ? "bg-emerald-500"
+                                : "bg-amber-500"
+                        }`}
+                    />
+
+                    <span className="text-xs font-medium text-slate-600">
+                        {connected ? "Live" : "Reconnecting"}
+                    </span>
+
+                </div>
 
                 <div
                     ref={notificationRef}

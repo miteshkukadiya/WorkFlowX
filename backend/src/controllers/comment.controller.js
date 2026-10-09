@@ -8,6 +8,8 @@ import logActivity  from "../utils/logActivity.js";
 
 import createNotification from "../utils/createNotification.js";
 
+import { emitToProject } from "../utils/socketEvents.js";
+
 
 export const addComment = async (
     req,
@@ -167,6 +169,17 @@ export const addComment = async (
             });
 
         }
+
+        // REAL-TIME COMMENT CREATED EVENT
+
+        emitToProject(
+            access.project._id,
+            "comment:created",
+            {
+                taskId: String(access.task._id),
+                projectId: String(access.project._id)
+            }
+        );
 
 
 
@@ -380,10 +393,18 @@ export const updateComment = async (
 
         await comment.save();
 
-
         await comment.populate(
             "user",
             "name email"
+        );
+
+        emitToProject(
+            comment.project,
+            "comment:updated",
+            {
+                taskId: String(comment.task),
+                projectId: String(comment.project)
+            }
         );
 
 
@@ -494,29 +515,61 @@ export const deleteComment = async (
         }
 
 
+        // await Comment.findByIdAndDelete(
+        //     commentId
+        // );
+
+
+        // await logActivity({
+
+        //     task:
+        //         access.task._id,
+
+        //     project:
+        //         access.project._id,
+
+        //     user:
+        //         req.user._id,
+
+        //     action:
+        //         "comment_deleted",
+
+        //     message:
+        //         "deleted a comment"
+
+        // });
+
+        // SAVE IDS BEFORE DELETING COMMENT
+
+        const taskId = String(comment.task);
+        const projectId = String(comment.project);
+
+        // DELETE COMMENT
+
         await Comment.findByIdAndDelete(
             commentId
         );
 
+        // LOG COMMENT DELETION
 
         await logActivity({
-
-            task:
-                access.task._id,
-
-            project:
-                access.project._id,
-
-            user:
-                req.user._id,
-
-            action:
-                "comment_deleted",
-
-            message:
-                "deleted a comment"
-
+            task: access.task._id,
+            project: access.project._id,
+            user: req.user._id,
+            action: "comment_deleted",
+            message: "deleted a comment"
         });
+
+        // REAL-TIME COMMENT DELETED EVENT
+
+        emitToProject(
+            projectId,
+            "comment:deleted",
+            {
+                taskId: taskId,
+                projectId: projectId
+            }
+        );
 
 
         return res.status(200).json({

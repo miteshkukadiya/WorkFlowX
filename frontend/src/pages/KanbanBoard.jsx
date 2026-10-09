@@ -1,7 +1,8 @@
 import {
     useEffect,
     useMemo,
-    useState
+    useState,
+    useCallback
 } from "react";
 
 import {
@@ -16,6 +17,8 @@ import {
 import {
     arrayMove
 } from "@dnd-kit/sortable";
+
+import { useProjectSocket } from "../hooks/useProjectSocket";
 
 import {
     Columns3,
@@ -137,12 +140,54 @@ export default function KanbanBoard() {
 
     };
 
+    // REFRESH TASKS WHEN SOCKET EVENT ARRIVES
+
+    const loadTasks = useCallback(async () => {
+
+        if (!selectedProject) return;
+
+        try {
+
+            const data = await taskService.getAll({
+                projectId: selectedProject
+            });
+
+            setTasks((previous) => [
+                ...previous.filter(
+                    (task) =>
+                        String(task.project?._id ?? task.project) !==
+                        String(selectedProject)
+                ),
+                ...data
+            ]);
+
+        } catch (error) {
+
+            console.error(
+                "Unable to refresh Kanban tasks:",
+                error
+            );
+
+        }
+
+    }, [selectedProject]);
+
 
     useEffect(() => {
 
         loadData();
 
     }, []);
+
+    // REAL-TIME KANBAN BOARD UPDATES
+
+    useProjectSocket(selectedProject, {
+        "task:created": loadTasks,
+        "task:updated": loadTasks,
+        "task:deleted": loadTasks,
+        "task:moved": loadTasks,
+        "task:reordered": loadTasks
+    });
 
 
     // FILTER BY PROJECT

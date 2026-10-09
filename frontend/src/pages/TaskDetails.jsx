@@ -44,6 +44,8 @@ import {attachmentService} from "../services/attachmentService";
 
 import AttachmentsSection from "../components/attachments/AttachmentsSection";
 
+import { useSocket } from "../context/SocketContext";
+
 
 export default function TaskDetails() {
 
@@ -54,6 +56,8 @@ export default function TaskDetails() {
     const {
         user
     } = useAuth();
+
+    const { socket } = useSocket();
 
 
     const [task, setTask] =
@@ -138,6 +142,72 @@ export default function TaskDetails() {
         loadTaskData();
 
     }, [loadTaskData]);
+
+    useEffect(() => {
+        if (!socket || !task?._id) return;
+
+        const projectId =
+            typeof task.project === "object"
+                ? task.project?._id
+                : task.project;
+
+        if (!projectId) return;
+
+        const joinProject = () => {
+            socket.emit("project:join", projectId);
+        };
+
+        const refreshTask = async (event) => {
+            if (String(event.taskId) !== String(task._id)) return;
+
+            const data = await taskService.getById(task._id);
+            setTask(data);
+        };
+
+        const refreshComments = async (event) => {
+            if (String(event.taskId) !== String(task._id)) return;
+
+            const data = await commentService.getByTask(task._id);
+            setComments(data);
+        };
+
+        const refreshActivities = async (event) => {
+            if (String(event.taskId) !== String(task._id)) return;
+
+            const data = await activityService.getByTask(task._id);
+            setActivities(data);
+        };
+
+        if (socket.connected) joinProject();
+
+        socket.on("connect", joinProject);
+
+        socket.on("task:updated", refreshTask);
+        socket.on("task:moved", refreshTask);
+
+        socket.on("comment:created", refreshComments);
+        socket.on("comment:updated", refreshComments);
+        socket.on("comment:deleted", refreshComments);
+
+        socket.on("activity:created", refreshActivities);
+
+        return () => {
+            socket.off("connect", joinProject);
+
+            socket.off("task:updated", refreshTask);
+            socket.off("task:moved", refreshTask);
+
+            socket.off("comment:created", refreshComments);
+            socket.off("comment:updated", refreshComments);
+            socket.off("comment:deleted", refreshComments);
+
+            socket.off("activity:created", refreshActivities);
+
+            if (socket.connected) {
+                socket.emit("project:leave", projectId);
+            }
+        };
+    }, [socket, task?._id, task?.project?._id]);
 
 
     if (loading) {

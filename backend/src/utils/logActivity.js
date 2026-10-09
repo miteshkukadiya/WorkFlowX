@@ -1,5 +1,6 @@
-import Activity
-    from "../models/Activity.js";
+import Activity from "../models/Activity.js";
+
+import { emitToProject } from "./socketEvents.js";
 
 
 const logActivity = async ({
@@ -21,6 +22,15 @@ const logActivity = async ({
             message,
             metadata
         });
+
+        emitToProject(
+            project,
+            "activity:created",
+            {
+                taskId: String(task),
+                projectId: String(project)
+            }
+        );
 
     } catch (error) {
 

@@ -23,8 +23,7 @@ app.use(express.json());
 app.use("/api/v1/auth" , authRoutes);
 
 
-// error handler
-app.use(errorMiddleware);
+
 
 app.use(
     "/api/v1/projects",
@@ -75,5 +74,8 @@ app.use(
     "/api/v1/dashboard",
     dashboardRoutes
 );
+
+// error handler
+app.use(errorMiddleware);
 
 export default app;

@@ -8,6 +8,8 @@ import logActivity from "../utils/logActivity.js";
 
 import createNotification from "../utils/createNotification.js";
 
+import { emitToProject } from "../utils/socketEvents.js";
+
 
 // CHECK PROJECT ACCESS
 
@@ -182,6 +184,17 @@ export const createTask = async (req, res) => {
             });
 
         }
+
+        // REAL-TIME TASK CREATED EVENT
+
+        emitToProject(
+            task.project,
+            "task:created",
+            {
+                taskId: String(task._id),
+                projectId: String(task.project)
+            }
+        );
 
         return res.status(201).json({
             success: true,
@@ -693,6 +706,17 @@ export const updateTask = async (req, res) => {
             .populate("project", "name color")
             .populate("assignedTo", "name email");
 
+        // REAL-TIME TASK UPDATED EVENT
+
+        emitToProject(
+            task.project,
+            "task:updated",
+            {
+                taskId: String(task._id),
+                projectId: String(task.project)
+            }
+        );
+
         return res.status(200).json({
             success: true,
             message: "Task updated successfully",
@@ -753,13 +777,37 @@ export const deleteTask = async (req, res) => {
 
         }
 
+        // await task.deleteOne();
+
+        // return res.status(200).json({
+        //     success: true,
+        //     message: "Task deleted successfully"
+        // });
+
+        // SAVE IDS BEFORE DELETION
+
+        const deletedTaskId = String(task._id);
+        const deletedProjectId = String(task.project);
+
+        // DELETE TASK
+
         await task.deleteOne();
+
+        // REAL-TIME TASK DELETED EVENT
+
+        emitToProject(
+            deletedProjectId,
+            "task:deleted",
+            {
+                taskId: deletedTaskId,
+                projectId: deletedProjectId
+            }
+        );
 
         return res.status(200).json({
             success: true,
             message: "Task deleted successfully"
         });
-
     } catch (error) {
 
         return res.status(500).json({
@@ -984,6 +1032,19 @@ export const moveTask = async (req, res) => {
             .populate(
                 "assignedTo",
                 "name email"
+            );
+
+            // REAL-TIME TASK MOVED EVENT
+
+            emitToProject(
+                task.project,
+                "task:moved",
+                {
+                    taskId: String(task._id),
+                    projectId: String(task.project),
+                    status: task.status,
+                    position: task.position
+                }
             );
 
 
@@ -1385,6 +1446,16 @@ export const reorderTasks = async (req, res) => {
 
         await Task.bulkWrite(
             operations
+        );
+
+        // REAL-TIME TASK REORDERED EVENT
+
+        emitToProject(
+            projectId,
+            "task:reordered",
+            {
+                projectId: String(projectId)
+            }
         );
 
 

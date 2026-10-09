@@ -1,4 +1,5 @@
 import Notification from "../models/Notification.js";
+import { emitToUser } from "./socketEvents.js";
 
 
 const createNotification = async ({
@@ -41,6 +42,19 @@ const createNotification = async ({
                 task
 
             });
+
+        const populatedNotification = await Notification.findById(
+            notification._id
+        )
+            .populate("sender", "name email")
+            .populate("project", "name")
+            .populate("task", "title");
+
+        emitToUser(
+            recipient,
+            "notification:new",
+            populatedNotification
+        );
 
 
         return notification;
