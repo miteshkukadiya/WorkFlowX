@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import errorMiddleware from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import ApiError from "./utils/ApiError.js";
@@ -15,6 +16,7 @@ import reportRoutes from "./routes/report.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import taskSearchRoutes from "./routes/taskSearch.routes.js";
 import savedViewRoutes from "./routes/savedView.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 
 
 
@@ -87,6 +89,18 @@ app.use(
 app.use(
     "/api/v1/saved-views", 
     savedViewRoutes
+);
+
+app.use(
+    "/api/v1/settings",
+    settingsRoutes
+);
+
+app.use(
+    "/uploads/avatars",
+    express.static(
+        path.resolve("uploads", "avatars")
+    )
 );
 
 // error handler

@@ -31,9 +31,51 @@ const userSchema = new mongoose.Schema(
             default : "employee"
         },
 
-        avtar : {
-            type : String,
-            default : ""
+        bio: {
+            type: String,
+            trim: true,
+            maxlength: 300,
+            default: ""
+        },
+
+        avatar: {
+            type: String,
+            default: ""
+        },
+
+        preferences: {
+            theme: {
+                type: String,
+                enum: ["light", "dark", "system"],
+                default: "system"
+            },
+
+            timezone: {
+                type: String,
+                default: "Asia/Kolkata"
+            },
+
+            notifications: {
+                taskAssigned: {
+                    type: Boolean,
+                    default: true
+                },
+
+                taskStatusChanged: {
+                    type: Boolean,
+                    default: true
+                },
+
+                comments: {
+                    type: Boolean,
+                    default: true
+                },
+
+                projectInvites: {
+                    type: Boolean,
+                    default: true
+                }
+            }
         }
     },
     {

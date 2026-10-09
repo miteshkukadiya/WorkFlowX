@@ -20,6 +20,7 @@ import Team from "./pages/Team";
 import TaskDetails from "./pages/TaskDetails";
 import Reports from "./pages/Reports";
 import AllTasks from "./pages/AllTasks";
+import Settings from "./pages/Settings";
 
 
 function App() {
@@ -58,14 +59,7 @@ function App() {
                         }
                     />
 
-                    {/* <Route
-                        path="/tasks"
-                        element={
-                            <AppLayout>
-                                <Tasks />
-                            </AppLayout>
-                        }
-                    /> */}
+                    
 
                     <Route
                         path="/tasks"
@@ -117,6 +111,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <Reports />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/settings"
+                        element={
+                            <AppLayout>
+                                <Settings />
                             </AppLayout>
                         }
                     />

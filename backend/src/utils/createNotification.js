@@ -1,5 +1,8 @@
 import Notification from "../models/Notification.js";
 import { emitToUser } from "./socketEvents.js";
+import User from "../models/User.js";
+
+
 
 
 const createNotification = async ({
@@ -25,6 +28,31 @@ const createNotification = async ({
             sender &&
             String(recipient) ===
             String(sender)
+        ) {
+            return null;
+        }
+
+        // CHECK USER NOTIFICATION PREFERENCES
+
+        const recipientUser = await User.findById(recipient)
+            .select("preferences.notifications");
+
+        if (!recipientUser) {
+            return null;
+        }
+
+        const preferenceMap = {
+            task_assigned: "taskAssigned",
+            task_status_changed: "taskStatusChanged",
+            comment_added: "comments",
+            project_member_added: "projectInvites"
+        };
+
+        const preferenceKey = preferenceMap[type];
+
+        if (
+            preferenceKey &&
+            recipientUser.preferences?.notifications?.[preferenceKey] === false
         ) {
             return null;
         }

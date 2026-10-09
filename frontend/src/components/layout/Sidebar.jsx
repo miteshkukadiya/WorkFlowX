@@ -232,17 +232,33 @@ const Sidebar = ({
                 </nav>
 
 
-                {/* Bottom */}
+                
+
+                {/* Bottom - Settings Navigation */}
 
                 <div className="border-t border-slate-100 p-4">
 
-                    <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    <NavLink
+                        to="/settings"
+                        onClick={onClose}
+                        className={({ isActive }) => `
+                            flex w-full items-center gap-3
+                            rounded-xl px-3 py-2.5
+                            text-sm font-medium
+                            transition-colors
+                            ${
+                                isActive
+                                    ? "bg-slate-900 text-white shadow-sm shadow-slate-200"
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            }
+                        `}
+                    >
 
                         <Settings size={18} />
 
                         Settings
 
-                    </button>
+                    </NavLink>
 
                 </div>
 
