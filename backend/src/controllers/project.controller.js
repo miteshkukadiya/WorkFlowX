@@ -4,6 +4,7 @@ import Project from "../models/Project.js";
 import User from "../models/User.js";
 import Task from "../models/Task.js";
 import createNotification from "../utils/createNotification.js";
+import { getIO } from "../../socket/socket.js";
 
 export const createProject = async (req , res) => {
 
@@ -626,6 +627,16 @@ export const removeProjectMember = async (
 
 
         await project.save();
+
+        // Revoke removed member's Socket.IO project access
+        const io = getIO();
+
+        if (io) {
+            const userRoom = `user:${userId}`;
+            const projectRoom = `project:${project._id}`;
+
+            io.in(userRoom).socketsLeave(projectRoom);
+        }
 
 
         /*

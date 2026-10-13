@@ -223,6 +223,12 @@ export const changePassword = async (req, res) => {
         // This example assumes the User model already hashes
         // passwords using a pre-save hook.
         user.password = newPassword;
+
+        // Give JWT timestamps a one-second tolerance.
+        user.passwordChangedAt = new Date(
+            Date.now() - 1000
+        );
+
         await user.save();
 
         return res.json({

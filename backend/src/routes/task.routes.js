@@ -12,13 +12,20 @@ import {
 
 import { protect } from "../middleware/authMiddleware.js";
 
+import { validate } from "../middleware/validate.js";
+import { createTaskSchema } from "../../validators/task.validator.js";
+
 const router = express.Router();
 
 router.use(protect);
 
 router
     .route("/")
-    .post(createTask)
+    // .post(createTask)
+    .post(
+        validate(createTaskSchema),
+        createTask
+    )
     .get(getTasks);
 
 router.patch(

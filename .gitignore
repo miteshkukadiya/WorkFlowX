@@ -4,5 +4,9 @@ backend/.env
 frontend/node_modules/
 frontend/.env
 
+.env
+.env.*
+!.env.example
+
 uploads/tasks/*
 !uploads/tasks/.gitkeep

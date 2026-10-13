@@ -72,17 +72,36 @@ const protect = asyncHandler(async (req , res , next) => {
 
     }
 
-    // find user
+    
+    // Find user
     const user = await User.findById(decoded.userId);
 
-    if(!user)
-    {
+    if (!user) {
         throw new ApiError(
             401,
             "User associated with this token no longer exists"
         );
     }
 
+    // Check if password changed after JWT was issued
+    if (user.passwordChangedAt) {
+
+        const changedAtSeconds = Math.floor(
+            user.passwordChangedAt.getTime() / 1000
+        );
+
+        if (
+            typeof decoded.iat !== "number" ||
+            decoded.iat < changedAtSeconds
+        ) {
+            throw new ApiError(
+                401,
+                "Session expired. Please login again."
+            );
+        }
+    }
+
+    // Attach authenticated user to request
     req.user = user;
 
     next();

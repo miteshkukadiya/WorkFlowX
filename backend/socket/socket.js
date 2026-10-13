@@ -4,14 +4,28 @@ import jwt from "jsonwebtoken";
 import User from "../src/models/User.js";
 import Project from "../src/models/Project.js";
 
+import { env } from "../src/config/env.js"; 
+
 let io = null;
 
 export const initializeSocket = (httpServer) => {
+    // io = new Server(httpServer, {
+    //     cors: {
+    //         origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    //         credentials: true
+    //     }
+    // });
+
     io = new Server(httpServer, {
         cors: {
-            origin: process.env.FRONTEND_URL || "http://localhost:5173",
+            origin: env.FRONTEND_URL,
             credentials: true
-        }
+        },
+
+        maxHttpBufferSize: 100000,
+
+        pingTimeout: 20000,
+        pingInterval: 25000
     });
 
     // Authenticate socket connection
@@ -23,9 +37,14 @@ export const initializeSocket = (httpServer) => {
                 return next(new Error("Authentication required"));
             }
 
+            // const decoded = jwt.verify(
+            //     token,
+            //     process.env.JWT_SECRET
+            // );
+
             const decoded = jwt.verify(
                 token,
-                process.env.JWT_SECRET
+                env.JWT_SECRET
             );
 
             const userId =
@@ -36,10 +55,33 @@ export const initializeSocket = (httpServer) => {
             }
 
             const user = await User.findById(userId)
-                .select("_id name email");
+                .select("_id name email passwordChangedAt");
+
+            // if (!user) {
+            //     return next(new Error("User not found"));
+            // }
+
+            // socket.user = user;
+            // next();
 
             if (!user) {
                 return next(new Error("User not found"));
+            }
+
+            // Reject JWTs issued before password change
+            if (user.passwordChangedAt) {
+                const changedAtSeconds = Math.floor(
+                    user.passwordChangedAt.getTime() / 1000
+                );
+
+                if (
+                    typeof decoded.iat !== "number" ||
+                    decoded.iat < changedAtSeconds
+                ) {
+                    return next(
+                        new Error("Session expired")
+                    );
+                }
             }
 
             socket.user = user;
