@@ -26,6 +26,7 @@ import pinoHttp from "pino-http";
 import { logger } from "./config/logger.js";
 
 import healthRoutes from "./routes/health.routes.js";
+import organizationRoutes from "./routes/organization.routes.js";
 
 const app = express();
 
@@ -60,8 +61,9 @@ app.use(
     })
 );
 
-app.use("/api/v1/auth", authLimiter, authRoutes);
+app.use("/api/v1/health", healthRoutes);
 
+app.use("/api/v1/organizations", organizationRoutes);
 
 
 app.use("/api/v1/auth" , authLimiter, authRoutes);

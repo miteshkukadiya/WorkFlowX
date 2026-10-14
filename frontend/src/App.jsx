@@ -21,6 +21,7 @@ import TaskDetails from "./pages/TaskDetails";
 import Reports from "./pages/Reports";
 import AllTasks from "./pages/AllTasks";
 import Settings from "./pages/Settings";
+import CreateWorkspace from "./pages/CreateWorkspace";
 
 
 function App() {
@@ -111,6 +112,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <Reports />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/create-workspace"
+                        element={
+                            <AppLayout>
+                                <CreateWorkspace />
                             </AppLayout>
                         }
                     />

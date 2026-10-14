@@ -58,6 +58,13 @@ const projectSchema = new mongoose.Schema(
         color: {
             type: String,
             default: "#6366f1"
+        },
+
+        organization: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Organization",
+            required: true,
+            index: true
         }
     },
     {
@@ -65,6 +72,7 @@ const projectSchema = new mongoose.Schema(
     }
 );
 
+projectSchema.index({organization: 1, createdAt: -1});
 projectSchema.index({ owner: 1, createdAt: -1 });
 projectSchema.index({ members: 1 });
 

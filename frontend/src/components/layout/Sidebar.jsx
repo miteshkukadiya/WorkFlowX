@@ -8,12 +8,14 @@ import {
     Settings,
     X,
     ListTodo,
-    Columns3
+    Columns3,
+    Building2
 } from "lucide-react";
 
 
 
 import { NavLink } from "react-router-dom";
+import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 const Sidebar = ({
     isOpen,
@@ -55,6 +57,11 @@ const Sidebar = ({
             label: "Team",
             icon: Users,
             path: "/team"
+        },
+        {
+            label: "Create Workspace",
+            path: "/workspaces/new",
+            icon: Building2
         }
     ];
 
@@ -116,7 +123,7 @@ const Sidebar = ({
 
                 {/* Workspace */}
 
-                <div className="px-4 py-5">
+                {/* <div className="px-4 py-5">
 
                     <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
 
@@ -138,6 +145,11 @@ const Sidebar = ({
 
                     </div>
 
+                </div> */}
+
+                {/* Workspace Switcher */}
+                <div className="px-4 py-4 border-b border-slate-100">
+                    <WorkspaceSwitcher />
                 </div>
 
 

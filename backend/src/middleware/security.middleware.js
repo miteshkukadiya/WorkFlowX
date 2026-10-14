@@ -39,7 +39,8 @@ export const corsMiddleware = cors({
 
     allowedHeaders: [
         "Content-Type",
-        "Authorization"
+        "Authorization",
+        "X-Organization-Id"
     ]
 });
 

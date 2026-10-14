@@ -30,6 +30,8 @@ export const createProject = async (req , res) => {
             startDate,
             endDate,
             color,
+
+            organization: req.tenant.organizationId,
             owner: req.user._id,
             members: []
         })
@@ -53,6 +55,7 @@ export const getProjects = async (req , res) => {
     try {
 
         const projects = await Project.find({
+            organization: req.tenant.organizationId,
             $or :[
                 { owner: req.user._id },
                 { members: req.user._id }
@@ -93,6 +96,7 @@ export const getProjectById = async (req , res) => {
 
         const project = await Project.findOne({
             _id: id,
+            organization: req.tenant.organizationId,
             $or: [
                 { owner: req.user._id },
                 { members: req.user._id }
@@ -139,6 +143,7 @@ export const updateProject = async(req,res) => {
 
         const project = await Project.findOne({
             _id: id,
+            organization: req.tenant.organizationId,
             owner: req.user._id
         });
 
@@ -213,6 +218,7 @@ export const deleteProject = async (req, res) => {
 
         const project = await Project.findOneAndDelete({
             _id: id,
+            organization: req.tenant.organizationId,
             owner: req.user._id
         });
 
@@ -285,8 +291,12 @@ export const addProjectMember = async (
         }
 
 
-        const project =
-            await Project.findById(id);
+        // const project =
+        //     await Project.findById(id);
+        const project = await Project.findOne({
+            _id: id,
+            organization: req.tenant.organizationId
+        });
 
 
         if (!project) {
@@ -463,18 +473,25 @@ export const getProjectMembers = async (
         }
 
 
-        const project =
-            await Project.findById(id)
+        // const project =
+        //     await Project.findById(id)
 
-                .populate(
-                    "owner",
-                    "name email role"
-                )
+        //         .populate(
+        //             "owner",
+        //             "name email role"
+        //         )
 
-                .populate(
-                    "members",
-                    "name email role"
-                );
+        //         .populate(
+        //             "members",
+        //             "name email role"
+        //         );
+
+        const project = await Project.findOne({
+            _id: id,
+            organization: req.tenant.organizationId
+        })
+            .populate("owner", "name email role")
+            .populate("members", "name email role");
 
 
         if (!project) {
@@ -660,8 +677,12 @@ export const removeProjectMember = async (
         );
 
 
-        const updatedProject =
-            await Project.findById(id)
+        // const updatedProject =
+        //     await Project.findById(id)
+        const updatedProject = await Project.findOne({
+            _id: id,
+            organization: req.tenant.organizationId
+        })
 
                 .populate(
                     "owner",
