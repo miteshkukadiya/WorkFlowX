@@ -4,6 +4,9 @@ import { protect } from "../middleware/authMiddleware.js";
 import { requireTenant } from "../middleware/tenant.middleware.js";
 import { requireOrganizationRole } from "../utils/organizationAccess.js";
 
+import { authorizePermission } from "../middleware/authorizePermission.js";
+import { PERMISSIONS } from "../config/permissions.js";
+
 import {
     getMembers,
     updateMemberRole,
@@ -19,7 +22,7 @@ router.get("/", getMembers);
 
 router.patch(
     "/:memberId/role",
-    requireOrganizationRole("owner", "admin"),
+    authorizePermission(PERMISSIONS.MEMBER_UPDATE_ROLE),
     updateMemberRole
 );
 

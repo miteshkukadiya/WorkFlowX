@@ -13,6 +13,8 @@ import {
 
 import { protect } from "../middleware/authMiddleware.js";
 import { requireTenant } from "../middleware/tenant.middleware.js";
+import { authorizePermission } from "../middleware/authorizePermission.js";
+import { PERMISSIONS } from "../config/permissions.js";
 
 const router = express.Router();
 
@@ -21,7 +23,10 @@ router.use(requireTenant);
 
 router
     .route("/")
-    .post(createProject)
+    .post(
+        authorizePermission(PERMISSIONS.PROJECT_CREATE),
+        createProject
+    )
     .get(getProjects);
 
 router.get(
@@ -45,6 +50,11 @@ router
     .route("/:id")
     .get(getProjectById)
     .patch(updateProject)
-    .delete(deleteProject);
+    .delete(
+        authorizePermission(PERMISSIONS.PROJECT_DELETE),
+        deleteProject
+    );
+
+
 
 export default router;

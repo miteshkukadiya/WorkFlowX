@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import Organization from "../models/Organization.js";
 import OrganizationMember from "../models/OrganizationMember.js";
+import { writeAuditLog } from "../../services/audit.service.js";
 
 const makeSlug = (name) => {
     return name
@@ -171,5 +172,102 @@ export const updateOrganization = async (req, res, next) => {
 
     } catch (error) {
         next(error);
+    }
+};
+
+
+export const transferOwnership = async (req, res, next) => {
+    const { newOwnerId } = req.body;
+
+    if (!mongoose.isValidObjectId(newOwnerId)) {
+        return res.status(400).json({
+            success: false,
+            message: "Valid new owner ID is required"
+        });
+    }
+
+    const session = await mongoose.startSession();
+
+    try {
+        await session.withTransaction(async () => {
+            const organization = await Organization.findOne({
+                _id: req.tenant.organizationId,
+                owner: req.user._id,
+                status: "active"
+            }).session(session);
+
+            if (!organization) {
+                const error = new Error(
+                    "Only the current workspace owner can transfer ownership"
+                );
+                error.statusCode = 403;
+                throw error;
+            }
+
+            if (String(newOwnerId) === String(req.user._id)) {
+                const error = new Error("You already own this workspace");
+                error.statusCode = 400;
+                throw error;
+            }
+
+            const newOwner = await OrganizationMember.findOne({
+                organization: organization._id,
+                user: newOwnerId,
+                status: "active"
+            }).session(session);
+
+            if (!newOwner) {
+                const error = new Error(
+                    "New owner must be an active workspace member"
+                );
+                error.statusCode = 404;
+                throw error;
+            }
+
+            const oldOwner = await OrganizationMember.findOne({
+                organization: organization._id,
+                user: req.user._id,
+                role: "owner",
+                status: "active"
+            }).session(session);
+
+            if (!oldOwner) {
+                const error = new Error("Owner membership not found");
+                error.statusCode = 409;
+                throw error;
+            }
+
+            oldOwner.role = "admin";
+            newOwner.role = "owner";
+            organization.owner = newOwner.user;
+
+            await oldOwner.save({ session });
+            await newOwner.save({ session });
+            await organization.save({ session });
+
+            await writeAuditLog({
+                organizationId: organization._id,
+                actorId: req.user._id,
+                action: "workspace.ownership_transferred",
+                targetType: "Organization",
+                targetId: organization._id,
+                metadata: {
+                    previousOwnerId: String(req.user._id),
+                    newOwnerId: String(newOwnerId)
+                },
+                req,
+                session
+            });
+        });
+
+        return res.json({
+            success: true,
+            message: "Workspace ownership transferred successfully"
+        });
+
+    } catch (error) {
+        next(error);
+    } finally {
+        await session.endSession();
     }
 };

@@ -9,7 +9,8 @@ import {
     X,
     ListTodo,
     Columns3,
-    Building2
+    Building2,
+    ScrollText
 } from "lucide-react";
 
 
@@ -67,6 +68,11 @@ const Sidebar = ({
             label: "Workspace Team",
             path: "/workspace/team",
             icon: Users
+        },
+        {
+            label: "Audit Logs",
+            path: "/workspace/audit-logs",
+            icon: ScrollText
         }
     ];
 

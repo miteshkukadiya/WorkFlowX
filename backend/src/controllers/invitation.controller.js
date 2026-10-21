@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import Organization from "../models/Organization.js";
 import OrganizationMember from "../models/OrganizationMember.js";
 import OrganizationInvitation from "../models/OrganizationInvitation.js";
+import { WORKSPACE_LIMITS } from "../config/workspaceLimits.js";
 
 const hashToken = (token) =>
     crypto.createHash("sha256").update(token).digest("hex");
@@ -68,7 +69,49 @@ export const createInvitation = async (req, res, next) => {
             });
         }
 
+        
+        const organizationId = req.tenant.organizationId;
+
+        // Count active workspace members
+        const activeMembers = await OrganizationMember.countDocuments({
+            organization: organizationId,
+            status: "active"
+        });
+
+        // Count valid pending invitations
+        const pendingInvitations =
+            await OrganizationInvitation.countDocuments({
+                organization: organizationId,
+                status: "pending",
+                expiresAt: { $gt: new Date() }
+            });
+
+        // Check maximum workspace members
+        if (
+            activeMembers + pendingInvitations >=
+            WORKSPACE_LIMITS.maxMembers
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Workspace member limit reached"
+            });
+        }
+
+        // Check maximum pending invitations
+        if (
+            pendingInvitations >=
+            WORKSPACE_LIMITS.maxPendingInvitations
+        ) {
+            return res.status(429).json({
+                success: false,
+                message: "Too many pending invitations"
+            });
+        }
+
+
         const token = crypto.randomBytes(32).toString("hex");
+
+
 
         const invitation = await OrganizationInvitation.create({
             organization: req.tenant.organizationId,

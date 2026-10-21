@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import CreateWorkspace from "./pages/CreateWorkspace";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import WorkspaceAuditLogs from "./pages/WorkspaceAuditLogs";
 
 
 function App() {
@@ -141,6 +142,15 @@ function App() {
                         element={
                             <AppLayout>
                                 <AcceptInvitation />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="workspace/audit-logs"
+                        element={
+                            <AppLayout>
+                                <WorkspaceAuditLogs />
                             </AppLayout>
                         }
                     />

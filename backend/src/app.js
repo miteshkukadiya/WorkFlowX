@@ -31,6 +31,8 @@ import organizationRoutes from "./routes/organization.routes.js";
 import invitationRoutes from "./routes/invitation.routes.js";
 import organizationMemberRoutes from "./routes/organizationMember.routes.js";
 
+import auditRoutes from "./routes/audit.routes.js";
+
 const app = express();
 
 app.use(cors());
@@ -156,6 +158,8 @@ app.use(
         path.resolve("uploads", "avatars")
     )
 );
+
+app.use("/api/v1/audit-logs", auditRoutes);
 
 // 11. Handle unknown routes
 app.use(notFound);

@@ -8,6 +8,7 @@ import {
 
 import { workspaceTeamService } from "../services/workspaceTeamService";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { can } from "../utils/permissions";
 
 const roles = ["admin", "manager", "member", "guest"];
 
@@ -24,8 +25,23 @@ export default function WorkspaceTeam() {
     const [message, setMessage] = useState("");
     const [invitationUrl, setInvitationUrl] = useState("");
 
-    const canManage = ["owner", "admin"].includes(
-        activeWorkspace?.myRole
+    // const canManage = ["owner", "admin"].includes(
+    //     activeWorkspace?.myRole
+    // );
+
+    const canManage = can(
+        activeWorkspace?.myRole,
+        "member:invite"
+    );
+
+    const canUpdateRoles = can(
+        activeWorkspace?.myRole,
+        "member:update-role"
+    );
+
+    const canRemoveMembers = can(
+        activeWorkspace?.myRole,
+        "member:remove"
     );
 
     useEffect(() => {
@@ -206,11 +222,22 @@ export default function WorkspaceTeam() {
                             onChange={event => setRole(event.target.value)}
                             className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
                         >
-                            {roles.map(item => (
+                            {/* {roles.map(item => (
                                 <option key={item} value={item}>
                                     {item.charAt(0).toUpperCase() + item.slice(1)}
                                 </option>
-                            ))}
+                            ))} */}
+
+                            {roles
+                                .filter(item =>
+                                    activeWorkspace?.myRole === "owner" ||
+                                    item !== "admin"
+                                )
+                                .map(item => (
+                                    <option key={item} value={item}>
+                                        {item.charAt(0).toUpperCase() + item.slice(1)}
+                                    </option>
+                                ))}
                         </select>
 
                         <button
@@ -260,7 +287,10 @@ export default function WorkspaceTeam() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    {canManage && member.role !== "owner" ? (
+                                    {/* {canManage && member.role !== "owner" ? ( */}
+                                    {canUpdateRoles &&
+                                        member.role !== "owner" &&
+                                        !(activeWorkspace?.myRole === "admin" && member.role === "admin") ? (
                                         <select
                                             value={member.role}
                                             onChange={event =>
@@ -283,7 +313,11 @@ export default function WorkspaceTeam() {
                                         </span>
                                     )}
 
-                                    {canManage && member.role !== "owner" && (
+                                    {/* {canManage && member.role !== "owner" && ( */}
+
+                                    {canRemoveMembers &&
+                                        member.role !== "owner" &&
+                                        !(activeWorkspace?.myRole === "admin" && member.role === "admin") && (
                                         <button
                                             onClick={() => removeMember(member._id)}
                                             aria-label="Remove member"
