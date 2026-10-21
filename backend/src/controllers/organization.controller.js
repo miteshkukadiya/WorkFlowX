@@ -80,6 +80,13 @@ export const createOrganization = async (req, res, next) => {
         });
 
     } catch (error) {
+
+        console.error("========== CREATE WORKSPACE ERROR ==========");
+        console.error("Message:", error.message);
+        console.error("Code:", error.code);
+        console.error("Full Error:", error);
+        console.error("============================================");
+
         next(error);
     }
 };

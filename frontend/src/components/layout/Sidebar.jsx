@@ -60,8 +60,13 @@ const Sidebar = ({
         },
         {
             label: "Create Workspace",
-            path: "/workspaces/new",
+            path: "/create-workspace",
             icon: Building2
+        },
+        {
+            label: "Workspace Team",
+            path: "/workspace/team",
+            icon: Users
         }
     ];
 

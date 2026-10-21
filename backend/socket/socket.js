@@ -6,6 +6,9 @@ import Project from "../src/models/Project.js";
 
 import { env } from "../src/config/env.js"; 
 
+import OrganizationMember from "../src/models/OrganizationMember.js";
+import Organization from "../src/models/Organization.js";
+
 let io = null;
 
 export const initializeSocket = (httpServer) => {
@@ -109,6 +112,35 @@ export const initializeSocket = (httpServer) => {
                     ack?.({ success: false, message: "Project not found" });
                     return;
                 }
+
+                // Check whether organization is active
+                const organization = await Organization.findOne({
+                    _id: project.organization,
+                    status: "active"
+                });
+
+                if (!organization) {
+                    return ack?.({
+                        success: false,
+                        message: "Workspace unavailable"
+                    });
+                }
+
+                // Check whether user is an active organization member
+                const membership = await OrganizationMember.findOne({
+                    organization: project.organization,
+                    user: socket.user._id,
+                    status: "active"
+                });
+
+                if (!membership) {
+                    return ack?.({
+                        success: false,
+                        message: "Workspace access denied"
+                    });
+                }
+
+
 
                 const isOwner =
                     String(project.owner) === userId;

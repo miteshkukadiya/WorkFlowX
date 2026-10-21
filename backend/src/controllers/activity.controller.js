@@ -18,7 +18,8 @@ export const getTaskActivities =
             const access =
                 await getTaskAccess(
                     taskId,
-                    req.user._id
+                    req.user._id,
+                    req.tenant.organizationId
                 );
 
 

@@ -22,6 +22,8 @@ import Reports from "./pages/Reports";
 import AllTasks from "./pages/AllTasks";
 import Settings from "./pages/Settings";
 import CreateWorkspace from "./pages/CreateWorkspace";
+import WorkspaceTeam from "./pages/WorkspaceTeam";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 
 function App() {
@@ -121,6 +123,24 @@ function App() {
                         element={
                             <AppLayout>
                                 <CreateWorkspace />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="workspace/team"
+                        element={
+                            <AppLayout>
+                                <WorkspaceTeam />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/invitations/accept"
+                        element={
+                            <AppLayout>
+                                <AcceptInvitation />
                             </AppLayout>
                         }
                     />

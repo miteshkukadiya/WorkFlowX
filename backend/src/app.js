@@ -28,6 +28,9 @@ import { logger } from "./config/logger.js";
 import healthRoutes from "./routes/health.routes.js";
 import organizationRoutes from "./routes/organization.routes.js";
 
+import invitationRoutes from "./routes/invitation.routes.js";
+import organizationMemberRoutes from "./routes/organizationMember.routes.js";
+
 const app = express();
 
 app.use(cors());
@@ -64,6 +67,18 @@ app.use(
 app.use("/api/v1/health", healthRoutes);
 
 app.use("/api/v1/organizations", organizationRoutes);
+
+// Workspace Invitation Routes
+app.use(
+    "/api/v1/workspace-invitations",
+    invitationRoutes
+);
+
+// Organization Member Routes
+app.use(
+    "/api/v1/workspace-members",
+    organizationMemberRoutes
+);
 
 
 app.use("/api/v1/auth" , authLimiter, authRoutes);

@@ -28,7 +28,8 @@ export const uploadAttachment =
             const access =
                 await getTaskAccess(
                     taskId,
-                    req.user._id
+                    req.user._id,
+                    req.tenant.organizationId
                 );
 
 
@@ -182,7 +183,8 @@ export const getTaskAttachments =
             const access =
                 await getTaskAccess(
                     taskId,
-                    req.user._id
+                    req.user._id,
+                    req.tenant.organizationId
                 );
 
 
@@ -288,7 +290,8 @@ export const downloadAttachment =
             const access =
                 await getTaskAccess(
                     attachment.task,
-                    req.user._id
+                    req.user._id,
+                    req.tenant.organizationId
                 );
 
 
@@ -395,7 +398,8 @@ export const deleteAttachment =
             const access =
                 await getTaskAccess(
                     attachment.task,
-                    req.user._id
+                    req.user._id,
+                    req.tenant.organizationId
                 );
 
 

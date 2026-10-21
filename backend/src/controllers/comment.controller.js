@@ -57,7 +57,8 @@ export const addComment = async (
         const access =
             await getTaskAccess(
                 taskId,
-                req.user._id
+                req.user._id,
+                req.tenant.organizationId
             );
 
 
@@ -221,7 +222,8 @@ export const getComments = async (
         const access =
             await getTaskAccess(
                 taskId,
-                req.user._id
+                req.user._id,
+                req.tenant.organizationId
             );
 
 
@@ -353,7 +355,8 @@ export const updateComment = async (
         const access =
             await getTaskAccess(
                 comment.task,
-                req.user._id
+                req.user._id,
+                req.tenant.organizationId
             );
 
 
@@ -479,7 +482,8 @@ export const deleteComment = async (
         const access =
             await getTaskAccess(
                 comment.task,
-                req.user._id
+                req.user._id,
+                req.tenant.organizationId
             );
 
 

@@ -9,7 +9,8 @@ import Project
 
 const getTaskAccess = async (
     taskId,
-    userId
+    userId,
+    organizationId
 ) => {
 
     if (
@@ -24,6 +25,17 @@ const getTaskAccess = async (
             message: "Invalid task ID"
         };
 
+    }
+
+    if (
+        !organizationId ||
+        !mongoose.isValidObjectId(organizationId)
+    ) {
+        return {
+            allowed: false,
+            status: 403,
+            message: "Valid organization context required"
+        };
     }
 
 
@@ -44,10 +56,15 @@ const getTaskAccess = async (
     }
 
 
-    const project =
-        await Project.findById(
-            task.project
-        );
+    // const project =
+    //     await Project.findById(
+    //         task.project
+    //     );
+
+    const project = await Project.findOne({
+        _id: task.project,
+        organization: organizationId
+    });
 
 
     if (!project) {
