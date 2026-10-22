@@ -10,7 +10,8 @@ import {
     ListTodo,
     Columns3,
     Building2,
-    ScrollText
+    ScrollText,
+    CreditCard
 } from "lucide-react";
 
 
@@ -73,6 +74,11 @@ const Sidebar = ({
             label: "Audit Logs",
             path: "/workspace/audit-logs",
             icon: ScrollText
+        },
+        {
+            label: "Billing",
+            path: "/workspace/billing",
+            icon: CreditCard
         }
     ];
 

@@ -20,11 +20,19 @@ export default function CreateWorkspace() {
             setLoading(true);
             setError("");
 
-            await organizationService.create(name);
+            // await organizationService.create(name);
+
+            // await refreshWorkspaces();
+
+            // navigate("/dashboard");
+
+            const createdWorkspace = await organizationService.create(name);
+
+            console.log("Created Workspace:", createdWorkspace);
 
             await refreshWorkspaces();
 
-            navigate("/dashboard");
+            navigate("/");
         } catch (err) {
             setError(
                 err.response?.data?.message ||

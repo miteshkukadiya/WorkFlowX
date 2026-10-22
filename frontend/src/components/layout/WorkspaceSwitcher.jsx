@@ -31,7 +31,7 @@ export default function WorkspaceSwitcher() {
                     onChange={(event) => {
                         switchWorkspace(event.target.value);
 
-                        window.location.assign("/dashboard");
+                        window.location.assign("/");
                     }}
                     className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-3 py-3 pr-9 text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500"
                 >

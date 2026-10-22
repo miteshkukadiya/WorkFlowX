@@ -91,16 +91,54 @@ export function WorkspaceProvider({ children }) {
         );
     };
 
+    // const refreshWorkspaces = async () => {
+    //     const data = await organizationService.getAll();
+
+    //     setWorkspaces(data);
+
+    //     setActiveWorkspace(previous =>
+    //         data.find(item => item._id === previous?._id) ||
+    //         data[0] ||
+    //         null
+    //     );
+    // };
+
     const refreshWorkspaces = async () => {
-        const data = await organizationService.getAll();
+        try {
+            const data = await organizationService.getAll();
 
-        setWorkspaces(data);
+            console.log("Fetched Workspaces:", data);
 
-        setActiveWorkspace(previous =>
-            data.find(item => item._id === previous?._id) ||
-            data[0] ||
-            null
-        );
+            if (!Array.isArray(data)) {
+                throw new Error("Invalid workspace response");
+            }
+
+            setWorkspaces(data);
+
+            const storedId = localStorage.getItem(
+                `workflowx_workspace_${user._id}`
+            );
+
+            const selected =
+                data.find(item => item._id === storedId) ||
+                data.find(item => item._id === activeWorkspace?._id) ||
+                data[0] ||
+                null;
+
+            setActiveWorkspace(selected);
+
+            if (selected) {
+                localStorage.setItem(
+                    `workflowx_workspace_${user._id}`,
+                    selected._id
+                );
+            }
+
+            return selected;
+        } catch (error) {
+            console.error("Workspace refresh failed:", error);
+            throw error;
+        }
     };
 
     return (

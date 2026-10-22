@@ -14,7 +14,10 @@ const envSchema = z.object({
 
     JWT_SECRET: z.string().min(32),
 
-    FRONTEND_URL: z.string().url()
+    FRONTEND_URL: z.string().url(),
+
+    RAZORPAY_KEY_ID: z.string().min(1).optional(),
+    RAZORPAY_KEY_SECRET: z.string().min(1).optional()
 });
 
 const result = envSchema.safeParse(process.env);

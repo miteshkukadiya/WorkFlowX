@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import Organization from "../models/Organization.js";
 import OrganizationMember from "../models/OrganizationMember.js";
 import { writeAuditLog } from "../../services/audit.service.js";
+import Plan from "../models/Plan.js";
+import Subscription from "../models/Subscription.js";
 
 const makeSlug = (name) => {
     return name
@@ -37,13 +39,36 @@ export const createOrganization = async (req, res, next) => {
             });
         }
 
-        const slug = `${baseSlug}-${new mongoose.Types.ObjectId()
-            .toString()
-            .slice(-6)}`;
+        // const slug = `${baseSlug}-${new mongoose.Types.ObjectId()
+        //     .toString()
+        //     .slice(-6)}`;
 
-        // Use a transaction so the organization and owner membership
-        // are created together.
+        // // Use a transaction so the organization and owner membership
+        // // are created together.
+        // const session = await mongoose.startSession();
+
+        const slug = `${baseSlug}-${new mongoose.Types.ObjectId()
+        .toString()
+        .slice(-6)}`;
+
+        // Check Free Subscription Plan (NEW)
+        const freePlan = await Plan.findOne({
+            code: "free",
+            isActive: true
+        });
+
+        if (!freePlan) {
+            return res.status(503).json({
+                success: false,
+                message: "Subscription plans are not configured"
+            });
+        }
+
+        // Use a transaction so the organization, owner membership,
+        // and free subscription are created together.
         const session = await mongoose.startSession();
+
+
 
         let organization;
 
@@ -69,6 +94,17 @@ export const createOrganization = async (req, res, next) => {
                     }],
                     { session }
                 );
+
+                // Create Free Subscription
+                await Subscription.create(
+                [{
+                    organization: organization._id,
+                    plan: freePlan._id,
+                    status: "active",
+                    provider: "internal"
+                }],
+                { session }
+            );
             });
         } finally {
             await session.endSession();

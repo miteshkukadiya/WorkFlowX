@@ -25,6 +25,7 @@ import CreateWorkspace from "./pages/CreateWorkspace";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import WorkspaceAuditLogs from "./pages/WorkspaceAuditLogs";
+import Billing from "./pages/Billing";
 
 
 function App() {
@@ -153,6 +154,15 @@ function App() {
                                 <WorkspaceAuditLogs />
                             </AppLayout>
                         }
+                    />
+
+                    <Route
+                        path="workspace/billing"
+                        element={
+                                <AppLayout>
+                                    <Billing />
+                                </AppLayout>
+                            }
                     />
 
                     <Route

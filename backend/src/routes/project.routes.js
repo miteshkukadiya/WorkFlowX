@@ -15,6 +15,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import { requireTenant } from "../middleware/tenant.middleware.js";
 import { authorizePermission } from "../middleware/authorizePermission.js";
 import { PERMISSIONS } from "../config/permissions.js";
+import { checkProjectLimit } from "../middleware/entitlement.middleware.js";
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router
     .route("/")
     .post(
         authorizePermission(PERMISSIONS.PROJECT_CREATE),
+        checkProjectLimit, 
         createProject
     )
     .get(getProjects);

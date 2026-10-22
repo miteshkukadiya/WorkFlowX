@@ -1,0 +1,77 @@
+import mongoose from "mongoose";
+
+const subscriptionSchema = new mongoose.Schema(
+    {
+        organization: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Organization",
+            required: true,
+            unique: true
+        },
+
+        plan: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Plan",
+            required: true
+        },
+
+        status: {
+            type: String,
+            enum: [
+                "active",
+                "trialing",
+                "past_due",
+                "cancelled",
+                "expired"
+            ],
+            default: "active"
+        },
+
+        provider: {
+            type: String,
+            enum: ["internal", "razorpay"],
+            default: "internal"
+        },
+
+        razorpaySubscriptionId: {
+            type: String,
+            default: null
+        },
+
+        currentPeriodStart: {
+            type: Date,
+            default: null
+        },
+
+        currentPeriodEnd: {
+            type: Date,
+            default: null
+        },
+
+        trialEndsAt: {
+            type: Date,
+            default: null
+        },
+
+        cancelAtPeriodEnd: {
+            type: Boolean,
+            default: false
+        }
+    },
+    { timestamps: true }
+);
+
+subscriptionSchema.index(
+    { razorpaySubscriptionId: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            razorpaySubscriptionId: { $type: "string" }
+        }
+    }
+);
+
+export default mongoose.model(
+    "Subscription",
+    subscriptionSchema
+);

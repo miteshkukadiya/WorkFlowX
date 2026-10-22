@@ -11,6 +11,8 @@ import {
     revokeInvitation
 } from "../controllers/invitation.controller.js";
 
+import { checkMemberLimit } from "../middleware/entitlement.middleware.js";
+
 const router = express.Router();
 
 router.use(protect);
@@ -22,7 +24,10 @@ router.post("/accept", acceptInvitation);
 router.use(requireTenant);
 router.use(requireOrganizationRole("owner", "admin"));
 
-router.post("/", createInvitation);
+router.post("/", 
+                checkMemberLimit,
+                createInvitation
+            );
 router.get("/", getInvitations);
 router.delete("/:id", revokeInvitation);
 

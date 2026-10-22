@@ -17,6 +17,7 @@ import dashboardRoutes from "./routes/dashboard.routes.js";
 import taskSearchRoutes from "./routes/taskSearch.routes.js";
 import savedViewRoutes from "./routes/savedView.routes.js";
 import settingsRoutes from "./routes/settings.routes.js";
+import subscriptionRoutes from "./routes/subscription.routes.js";
 
 import { securityHeaders, corsMiddleware, apiLimiter, authLimiter } from "./middleware/security.middleware.js";
 
@@ -152,12 +153,21 @@ app.use(
     settingsRoutes
 );
 
+
+app.use(
+    "/api/v1/subscriptions",
+    subscriptionRoutes
+);
+
+
 app.use(
     "/uploads/avatars",
     express.static(
         path.resolve("uploads", "avatars")
     )
 );
+
+
 
 app.use("/api/v1/audit-logs", auditRoutes);
 
