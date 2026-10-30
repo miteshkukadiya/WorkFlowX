@@ -34,6 +34,10 @@ import organizationMemberRoutes from "./routes/organizationMember.routes.js";
 
 import auditRoutes from "./routes/audit.routes.js";
 
+import { razorpayWebhook } from "../src/controllers/razorpayWebhook.controller.js";
+
+import razorpayRoutes from "./routes/razorpay.routes.js";
+
 const app = express();
 
 app.use(cors());
@@ -43,6 +47,16 @@ app.use(securityHeaders);
 
 // 2. CORS
 app.use(corsMiddleware);
+
+app.post(
+    "/api/v1/webhooks/razorpay",
+    express.raw({
+        type: "application/json",
+        limit: "256kb"
+    }),
+    razorpayWebhook
+);
+
 
 // 3. Body parsing
 app.use(express.json({
@@ -170,6 +184,11 @@ app.use(
 
 
 app.use("/api/v1/audit-logs", auditRoutes);
+
+app.use(
+    "/api/v1/billing/razorpay",
+    razorpayRoutes
+);
 
 // 11. Handle unknown routes
 app.use(notFound);

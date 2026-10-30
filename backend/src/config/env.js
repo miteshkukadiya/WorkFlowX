@@ -17,7 +17,9 @@ const envSchema = z.object({
     FRONTEND_URL: z.string().url(),
 
     RAZORPAY_KEY_ID: z.string().min(1).optional(),
-    RAZORPAY_KEY_SECRET: z.string().min(1).optional()
+    RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
+
+    RAZORPAY_WEBHOOK_SECRET: z.string().min(16).optional()
 });
 
 const result = envSchema.safeParse(process.env);

@@ -9,6 +9,8 @@ import {
 
 import { subscriptionService } from "../services/subscriptionService";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { razorpayService } from "../services/razorpayService";
+import { loadRazorpay } from "../utils/loadRazorpay";
 
 function UsageBar({ label, current, max, icon: Icon }) {
     const unlimited = max === -1;
@@ -50,6 +52,11 @@ export default function Billing() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    
+    const [checkoutLoading, setCheckoutLoading] = useState(null);
+    const [checkoutMessage, setCheckoutMessage] = useState("");
+
+
     useEffect(() => {
         if (!activeWorkspace?._id) return;
 
@@ -88,6 +95,82 @@ export default function Billing() {
             cancelled = true;
         };
     }, [activeWorkspace?._id]);
+
+
+    
+    const startCheckout = async (planCode) => {
+        try {
+            setCheckoutLoading(planCode);
+            setError("");
+            setCheckoutMessage("");
+
+            await loadRazorpay();
+
+            const checkout = await razorpayService.createCheckout(
+                planCode
+            );
+
+            const options = {
+                key: checkout.keyId,
+                subscription_id: checkout.subscriptionId,
+                name: "WorkFlowX",
+                description: `${checkout.planName} Subscription`,
+
+                handler: async (response) => {
+                    try {
+                        await razorpayService.verifyCheckout(response);
+
+                        setCheckoutMessage(
+                            "Authorization verified. Your plan will update after Razorpay confirms activation."
+                        );
+
+                        const latest =
+                            await subscriptionService.getCurrent();
+
+                        setBilling(latest);
+                    } catch (error) {
+                        setError(
+                            error.response?.data?.message ||
+                            "Unable to verify checkout"
+                        );
+                    } finally {
+                        setCheckoutLoading(null);
+                    }
+                },
+
+                modal: {
+                    ondismiss: () => {
+                        setCheckoutLoading(null);
+                    }
+                },
+
+                theme: {
+                    color: "#4f46e5"
+                }
+            };
+
+            const instance = new window.Razorpay(options);
+
+            instance.on("payment.failed", (response) => {
+                setError(
+                    response.error?.description ||
+                    "Payment authorization failed"
+                );
+                setCheckoutLoading(null);
+            });
+
+            instance.open();
+
+        } catch (error) {
+            setError(
+                error.response?.data?.message ||
+                error.message ||
+                "Unable to start checkout"
+            );
+            setCheckoutLoading(null);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -180,6 +263,15 @@ export default function Billing() {
                     Available Plans
                 </h2>
 
+                {checkoutMessage && (
+                    <p
+                        role="status"
+                        className="rounded-xl bg-indigo-50 p-4 text-sm text-indigo-700"
+                    >
+                        {checkoutMessage}
+                    </p>
+                )}
+
                 <div className="grid gap-5 md:grid-cols-3">
                     {plans.map(plan => {
                         const selected =
@@ -237,12 +329,28 @@ export default function Billing() {
 
                                 <button
                                     type="button"
-                                    disabled
-                                    className="mt-7 w-full rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500"
+                                    disabled={
+                                        selected ||
+                                        plan.code === "free" ||
+                                        checkoutLoading !== null ||
+                                        subscription.provider === "razorpay"
+                                    }
+                                    onClick={() => startCheckout(plan.code)}
+                                    className={`mt-7 w-full rounded-xl px-4 py-3 text-sm font-semibold ${
+                                        selected
+                                            ? "bg-slate-100 text-slate-500"
+                                            : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                                    }`}
                                 >
                                     {selected
                                         ? "Current Plan"
-                                        : "Checkout Coming in Day 26"}
+                                        : checkoutLoading === plan.code
+                                            ? "Opening Checkout..."
+                                            : plan.code === "free"
+                                                ? "Free Plan"
+                                                : subscription.provider === "razorpay"
+                                                    ? "Plan Change Coming Soon"
+                                                    : `Upgrade to ${plan.name}`}
                                 </button>
                             </div>
                         );
