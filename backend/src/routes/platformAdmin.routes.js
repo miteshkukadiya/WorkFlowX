@@ -21,6 +21,13 @@ import {
     activatePlatformOrganization
 } from "../controllers/platformOrganization.controller.js";
 
+import {
+    getAllPlatformUsers,
+    getPlatformUserDetails,
+    suspendPlatformUser,
+    activatePlatformUser
+} from "../controllers/platformUser.controller.js";
+
 const { protect } = authMiddleware;
 
 const router = express.Router();
@@ -74,6 +81,28 @@ router.patch(
 router.patch(
     "/organizations/:id/activate",
     activatePlatformOrganization
+);
+
+// Platform User Management
+
+router.get(
+    "/users",
+    getAllPlatformUsers
+);
+
+router.get(
+    "/users/:id",
+    getPlatformUserDetails
+);
+
+router.patch(
+    "/users/:id/suspend",
+    suspendPlatformUser
+);
+
+router.patch(
+    "/users/:id/activate",
+    activatePlatformUser
 );
 
 export default router;

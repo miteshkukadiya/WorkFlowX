@@ -13,7 +13,9 @@ const platformAdminAuditLogSchema = new mongoose.Schema(
             type: String,
             enum: [
                 "organization.suspended",
-                "organization.activated"
+                "organization.activated",
+                "user.suspended",
+                "user.activated"
             ],
             required: true
         },
@@ -21,7 +23,14 @@ const platformAdminAuditLogSchema = new mongoose.Schema(
         targetOrganization: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Organization",
-            required: true,
+            default: null,
+            index: true
+        },
+
+        targetUser: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
             index: true
         },
 

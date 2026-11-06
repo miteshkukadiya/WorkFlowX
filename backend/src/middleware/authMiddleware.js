@@ -83,6 +83,15 @@ const protect = asyncHandler(async (req , res , next) => {
         );
     }
 
+
+    // Check whether the account is suspended
+    if (user.accountStatus === "suspended") {
+        throw new ApiError(
+            403,
+            "Your account has been suspended. Please contact support."
+        );
+    }
+
     // Check if password changed after JWT was issued
     if (user.passwordChangedAt) {
 

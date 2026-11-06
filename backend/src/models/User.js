@@ -36,6 +36,13 @@ const userSchema = new mongoose.Schema(
             default : "employee"
         },
 
+        accountStatus: {
+            type: String,
+            enum: ["active", "suspended"],
+            default: "active",
+            index: true
+        },
+
         bio: {
             type: String,
             trim: true,
