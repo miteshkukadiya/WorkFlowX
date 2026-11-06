@@ -15,7 +15,8 @@ const platformAdminAuditLogSchema = new mongoose.Schema(
                 "organization.suspended",
                 "organization.activated",
                 "user.suspended",
-                "user.activated"
+                "user.activated",
+                "subscription.plan_changed"
             ],
             required: true
         },
@@ -30,6 +31,13 @@ const platformAdminAuditLogSchema = new mongoose.Schema(
         targetUser: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
+            default: null,
+            index: true
+        },
+
+        targetSubscription: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Subscription",
             default: null,
             index: true
         },

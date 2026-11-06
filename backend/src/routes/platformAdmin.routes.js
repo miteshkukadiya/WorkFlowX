@@ -28,6 +28,14 @@ import {
     activatePlatformUser
 } from "../controllers/platformUser.controller.js";
 
+
+import {
+    getAllPlatformSubscriptions,
+    getPlatformSubscriptionStats,
+    getPlatformSubscriptionDetails,
+    changePlatformSubscriptionPlan
+} from "../controllers/platformSubscription.controller.js";
+
 const { protect } = authMiddleware;
 
 const router = express.Router();
@@ -103,6 +111,30 @@ router.patch(
 router.patch(
     "/users/:id/activate",
     activatePlatformUser
+);
+
+
+//Platform Subscription Management
+
+router.get(
+    "/subscriptions",
+    getAllPlatformSubscriptions
+);
+
+// Keep stats BEFORE /:id
+router.get(
+    "/subscriptions/stats",
+    getPlatformSubscriptionStats
+);
+
+router.get(
+    "/subscriptions/:id",
+    getPlatformSubscriptionDetails
+);
+
+router.patch(
+    "/subscriptions/:id/change-plan",
+    changePlatformSubscriptionPlan
 );
 
 export default router;
