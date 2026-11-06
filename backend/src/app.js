@@ -40,6 +40,7 @@ import razorpayRoutes from "./routes/razorpay.routes.js";
 
 import billingHistoryRoutes from "./routes/billingHistory.routes.js";
 
+import platformAdminRoutes from "./routes/platformAdmin.routes.js";
 
 const app = express();
 
@@ -196,6 +197,11 @@ app.use("/api/v1/audit-logs", auditRoutes);
 app.use(
     "/api/v1/billing/razorpay",
     razorpayRoutes
+);
+
+app.use(
+    "/api/v1/platform-admin",
+    platformAdminRoutes
 );
 
 // 11. Handle unknown routes
