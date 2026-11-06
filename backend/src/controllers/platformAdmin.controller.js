@@ -4,7 +4,7 @@ import OrganizationMember from "../models/OrganizationMember.js";
 import Subscription from "../models/Subscription.js";
 import BillingPayment from "../models/BillingPayment.js";
 
-// Day 28: Platform Admin profile
+// Platform Admin profile
 export const getPlatformAdminProfile = async (req, res) => {
     res.status(200).json({
         success: true,

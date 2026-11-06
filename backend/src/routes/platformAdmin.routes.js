@@ -36,6 +36,14 @@ import {
     changePlatformSubscriptionPlan
 } from "../controllers/platformSubscription.controller.js";
 
+import {
+    getPlatformRevenueTrends,
+    getAllPlatformPayments,
+    getPlatformPaymentDetails,
+    getPlatformAuditLogs,
+    getPlatformAuditLogDetails
+} from "../controllers/platformAnalytics.controller.js";
+
 const { protect } = authMiddleware;
 
 const router = express.Router();
@@ -135,6 +143,40 @@ router.get(
 router.patch(
     "/subscriptions/:id/change-plan",
     changePlatformSubscriptionPlan
+);
+
+
+// Platform Revenue Analytics
+
+router.get(
+    "/analytics/revenue-trends",
+    getPlatformRevenueTrends
+);
+
+
+// Platform Payment Management
+
+router.get(
+    "/payments",
+    getAllPlatformPayments
+);
+
+router.get(
+    "/payments/:id",
+    getPlatformPaymentDetails
+);
+
+
+// Platform Audit Log Management
+
+router.get(
+    "/audit-logs",
+    getPlatformAuditLogs
+);
+
+router.get(
+    "/audit-logs/:id",
+    getPlatformAuditLogDetails
 );
 
 export default router;
