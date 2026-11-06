@@ -4,6 +4,8 @@ import BillingCheckout from "../models/BillingCheckout.js";
 import Subscription from "../models/Subscription.js";
 import { razorpay } from "../config/razorpay.js";
 
+const CHECKOUT_TIMEOUT_MS = 15 * 60 * 1000;
+
 const verifySignature = (message, signature, secret) => {
     if (
         typeof signature !== "string" ||
@@ -75,12 +77,38 @@ export const createRazorpaySubscription = async (req, res, next) => {
             });
         }
 
-        const pending = await BillingCheckout.findOne({
+        let pending = await BillingCheckout.findOne({
             organization: organizationId,
             status: {
                 $in: ["created", "authenticated"]
             }
-        });
+        }).sort({ createdAt: -1 });
+
+        if (
+            pending?.status === "created" &&
+            Date.now() - pending.createdAt.getTime() > CHECKOUT_TIMEOUT_MS
+        ) {
+            const providerSubscription =
+                await razorpay.subscriptions.fetch(
+                    pending.razorpaySubscriptionId
+                );
+
+            if (
+                !["cancelled", "completed", "expired", "halted"]
+                    .includes(providerSubscription.status)
+            ) {
+                await razorpay.subscriptions.cancel(
+                    pending.razorpaySubscriptionId,
+                    0
+                );
+            }
+
+            await BillingCheckout.updateOne(
+                { _id: pending._id, status: "created" },
+                { $set: { status: "cancelled" } }
+            );
+            pending = null;
+        }
 
         if (pending) {
             return res.status(409).json({
@@ -113,7 +141,9 @@ export const createRazorpaySubscription = async (req, res, next) => {
             data: {
                 keyId: process.env.RAZORPAY_KEY_ID,
                 subscriptionId: providerSubscription.id,
-                planName: plan.name
+                planName: plan.name,
+                testMode: process.env.RAZORPAY_KEY_ID
+                    ?.startsWith("rzp_test_") || false
             }
         });
 
@@ -166,6 +196,18 @@ export const verifyCheckoutAuthorization = async (req, res, next) => {
             });
         }
 
+        await BillingCheckout.updateOne(
+            {
+                _id: checkout._id,
+                status: "created"
+            },
+            {
+                $set: {
+                    status: "authenticated"
+                }
+            }
+        );
+
         // Do not activate entitlements here.
         return res.json({
             success: true,
@@ -175,6 +217,40 @@ export const verifyCheckoutAuthorization = async (req, res, next) => {
             }
         });
 
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const cancelRazorpayCheckout = async (req, res, next) => {
+    try {
+        const { subscriptionId } = req.body;
+
+        if (!subscriptionId) {
+            return res.status(400).json({
+                success: false,
+                message: "Checkout subscription is required"
+            });
+        }
+
+        const checkout = await BillingCheckout.findOneAndUpdate(
+            {
+                organization: req.tenant.organizationId,
+                razorpaySubscriptionId: subscriptionId,
+                status: { $in: ["created", "authenticated"] }
+            },
+            {
+                $set: {
+                    status: "cancelled"
+                }
+            },
+            { new: true }
+        );
+
+        return res.json({
+            success: true,
+            cancelled: Boolean(checkout)
+        });
     } catch (error) {
         next(error);
     }

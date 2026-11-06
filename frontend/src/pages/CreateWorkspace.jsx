@@ -20,17 +20,9 @@ export default function CreateWorkspace() {
             setLoading(true);
             setError("");
 
-            // await organizationService.create(name);
-
-            // await refreshWorkspaces();
-
-            // navigate("/dashboard");
-
             const createdWorkspace = await organizationService.create(name);
 
-            console.log("Created Workspace:", createdWorkspace);
-
-            await refreshWorkspaces();
+            await refreshWorkspaces(createdWorkspace?._id);
 
             navigate("/");
         } catch (err) {

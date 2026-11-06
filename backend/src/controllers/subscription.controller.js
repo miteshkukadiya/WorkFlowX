@@ -5,6 +5,7 @@ import OrganizationInvitation from "../models/OrganizationInvitation.js";
 
 import {
     getWorkspaceSubscription,
+    getOrCreateFreeSubscription,
     isSubscriptionActive
 } from "../../services/subscription.service.js";
 
@@ -31,14 +32,8 @@ export const getMySubscription = async (req, res, next) => {
         const organizationId = req.tenant.organizationId;
 
         const subscription =
-            await getWorkspaceSubscription(organizationId);
-
-        if (!subscription) {
-            return res.status(404).json({
-                success: false,
-                message: "Workspace subscription not initialized"
-            });
-        }
+            await getWorkspaceSubscription(organizationId) ||
+            await getOrCreateFreeSubscription(organizationId);
 
         const [projects, members, invitations] =
             await Promise.all([

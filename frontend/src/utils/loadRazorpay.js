@@ -5,7 +5,7 @@ export const loadRazorpay = () => {
             return;
         }
 
-        const script = document.createElement("script");Billing.jsx
+        const script = document.createElement("script");
 
         script.src =
             "https://checkout.razorpay.com/v1/checkout.js";

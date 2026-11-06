@@ -11,6 +11,7 @@ import { subscriptionService } from "../services/subscriptionService";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { razorpayService } from "../services/razorpayService";
 import { loadRazorpay } from "../utils/loadRazorpay";
+import BillingHistory from "../components/billing/BillingHistory";
 
 function UsageBar({ label, current, max, icon: Icon }) {
     const unlimited = max === -1;
@@ -45,7 +46,10 @@ function UsageBar({ label, current, max, icon: Icon }) {
 }
 
 export default function Billing() {
-    const { activeWorkspace } = useWorkspace();
+    const {
+        activeWorkspace,
+        loading: workspaceLoading
+    } = useWorkspace();
 
     const [plans, setPlans] = useState([]);
     const [billing, setBilling] = useState(null);
@@ -55,10 +59,20 @@ export default function Billing() {
     
     const [checkoutLoading, setCheckoutLoading] = useState(null);
     const [checkoutMessage, setCheckoutMessage] = useState("");
+    const [testMode, setTestMode] = useState(false);
+
+    const [cancelLoading, setCancelLoading] = useState(false);
+    const [cancelMessage, setCancelMessage] = useState("");
 
 
     useEffect(() => {
-        if (!activeWorkspace?._id) return;
+        if (!activeWorkspace?._id) {
+            if (!workspaceLoading) {
+                setLoading(false);
+                setBilling(null);
+            }
+            return;
+        }
 
         let cancelled = false;
 
@@ -76,6 +90,7 @@ export default function Billing() {
                 if (!cancelled) {
                     setPlans(planData);
                     setBilling(billingData);
+                    setTestMode(false);
                 }
             } catch (err) {
                 if (!cancelled) {
@@ -94,7 +109,7 @@ export default function Billing() {
         return () => {
             cancelled = true;
         };
-    }, [activeWorkspace?._id]);
+    }, [activeWorkspace?._id, workspaceLoading]);
 
 
     
@@ -110,11 +125,35 @@ export default function Billing() {
                 planCode
             );
 
+            setTestMode(Boolean(checkout.testMode));
+
+            if (
+                !checkout?.keyId ||
+                !checkout?.subscriptionId ||
+                typeof window.Razorpay !== "function"
+            ) {
+                throw new Error(
+                    "Payment checkout is not configured correctly. Please contact the workspace owner."
+                );
+            }
+
             const options = {
                 key: checkout.keyId,
                 subscription_id: checkout.subscriptionId,
                 name: "WorkFlowX",
                 description: `${checkout.planName} Subscription`,
+                ...(checkout.testMode
+                    ? {
+                        prefill: {
+                            name: "Test User",
+                            email: "success@razorpay.com",
+                            contact: "9999999999"
+                        },
+                        notes: {
+                            environment: "test"
+                        }
+                    }
+                    : {}),
 
                 handler: async (response) => {
                     try {
@@ -139,7 +178,14 @@ export default function Billing() {
                 },
 
                 modal: {
-                    ondismiss: () => {
+                    ondismiss: async () => {
+                        try {
+                            await razorpayService.cancelCheckout(
+                                checkout.subscriptionId
+                            );
+                        } catch {
+                            // The provider webhook can still resolve the checkout state.
+                        }
                         setCheckoutLoading(null);
                     }
                 },
@@ -152,10 +198,24 @@ export default function Billing() {
             const instance = new window.Razorpay(options);
 
             instance.on("payment.failed", (response) => {
+                const paymentError = response.error || {};
+                const description = paymentError.description || "";
+                const code = paymentError.code || paymentError.reason || "";
+
                 setError(
-                    response.error?.description ||
-                    "Payment authorization failed"
+                    code
+                        ? `Razorpay payment failed (${code}): ${description || "Payment authorization failed"}`
+                        : /recurring/i.test(description)
+                            ? "આ card recurring subscription માટે eligible નથી. Razorpay Test Modeમાં subscription test card 4718 6091 0820 4366 વાપરો."
+                            : description || "Payment authorization failed"
                 );
+                razorpayService.cancelCheckout(checkout.subscriptionId)
+                    .catch((cancelError) => {
+                        console.error(
+                            "Unable to cancel failed Razorpay checkout",
+                            cancelError
+                        );
+                    });
                 setCheckoutLoading(null);
             });
 
@@ -168,6 +228,36 @@ export default function Billing() {
                 "Unable to start checkout"
             );
             setCheckoutLoading(null);
+        }
+    };
+
+    const handleCancelSubscription = async () => {
+        const confirmed = window.confirm(
+            "Are you sure you want to cancel auto-renewal for this workspace?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            setCancelLoading(true);
+            setCancelMessage("");
+            setError("");
+
+            const result = await subscriptionService.cancel(true);
+
+            setCancelMessage(
+                result.message || "Cancellation request submitted."
+            );
+
+            const latest = await subscriptionService.getCurrent();
+            setBilling(latest);
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Unable to cancel subscription"
+            );
+        } finally {
+            setCancelLoading(false);
         }
     };
 
@@ -188,7 +278,14 @@ export default function Billing() {
         );
     }
 
-    if (!billing) return null;
+    if (!billing) {
+        return (
+            <p className="rounded-xl bg-amber-50 p-5 text-amber-800">
+                No active workspace is available. Create or select a workspace
+                and try again.
+            </p>
+        );
+    }
 
     const { subscription, usage } = billing;
     const currentPlan = subscription.plan;
@@ -235,6 +332,37 @@ export default function Billing() {
                             ).toLocaleDateString()}
                         </p>
                     )}
+
+                    {subscription.provider === "razorpay" &&
+                        subscription.status === "active" &&
+                        !subscription.cancelAtPeriodEnd && (
+                            <button
+                                type="button"
+                                onClick={handleCancelSubscription}
+                                disabled={cancelLoading}
+                                className="mt-5 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                                {cancelLoading
+                                    ? "Processing..."
+                                    : "Cancel Subscription"}
+                            </button>
+                        )}
+
+                    {subscription.cancelAtPeriodEnd && (
+                        <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+                            Auto-renewal cancellation requested. Your paid access
+                            remains subject to the confirmed billing end date.
+                        </p>
+                    )}
+
+                    {cancelMessage && (
+                        <p
+                            role="status"
+                            className="mt-3 text-sm text-indigo-600"
+                        >
+                            {cancelMessage}
+                        </p>
+                    )}
                 </div>
 
                 <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -262,6 +390,16 @@ export default function Billing() {
                 <h2 className="mb-5 text-xl font-bold text-slate-900">
                     Available Plans
                 </h2>
+
+                {testMode && (
+                    <p className="mb-5 rounded-xl bg-blue-50 p-4 text-sm text-blue-800">
+                        Test Mode: recurring subscription માટે card
+                        <strong className="mx-1">
+                            4718 6091 0820 4366
+                        </strong>
+                        વાપરો. Expiry future date અને કોઈપણ CVV નાખો.
+                    </p>
+                )}
 
                 {checkoutMessage && (
                     <p
@@ -357,6 +495,9 @@ export default function Billing() {
                     })}
                 </div>
             </div>
+
+            <BillingHistory />
+
         </div>
     );
 }

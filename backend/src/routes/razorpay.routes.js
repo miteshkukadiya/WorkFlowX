@@ -7,7 +7,8 @@ import { PERMISSIONS } from "../config/permissions.js";
 
 import {
     createRazorpaySubscription,
-    verifyCheckoutAuthorization
+    verifyCheckoutAuthorization,
+    cancelRazorpayCheckout
 } from "../controllers/razorpay.controller.js";
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.use(
 
 router.post("/checkout", createRazorpaySubscription);
 router.post("/verify", verifyCheckoutAuthorization);
+router.post("/checkout/cancel", cancelRazorpayCheckout);
 
 export default router;

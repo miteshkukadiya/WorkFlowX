@@ -17,5 +17,14 @@ export const razorpayService = {
         );
 
         return response.data;
+    },
+
+    cancelCheckout: async (subscriptionId) => {
+        const response = await api.post(
+            "/billing/razorpay/checkout/cancel",
+            { subscriptionId }
+        );
+
+        return response.data;
     }
 };

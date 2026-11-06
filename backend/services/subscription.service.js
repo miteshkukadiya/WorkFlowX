@@ -47,23 +47,27 @@ export const isSubscriptionActive = (subscription) => {
     const now = new Date();
 
     if (subscription.status === "trialing") {
-        return (
+        return Boolean(
             subscription.trialEndsAt &&
             subscription.trialEndsAt > now
         );
     }
 
-    if (subscription.status !== "active") {
-        return false;
+    if (subscription.status === "active") {
+        return true;
     }
 
-    if (
-        subscription.provider === "razorpay" &&
-        (!subscription.currentPeriodEnd ||
-            subscription.currentPeriodEnd <= now)
-    ) {
-        return false;
+    if (subscription.status === "past_due") {
+        const paidPeriodValid =
+            subscription.currentPeriodEnd &&
+            subscription.currentPeriodEnd > now;
+
+        const graceValid =
+            subscription.gracePeriodEndsAt &&
+            subscription.gracePeriodEndsAt > now;
+
+        return Boolean(paidPeriodValid || graceValid);
     }
 
-    return true;
+    return false;
 };

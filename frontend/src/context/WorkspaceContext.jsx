@@ -11,8 +11,12 @@ import { setActiveOrganizationId } from "../utils/workspaceSession";
 
 const WorkspaceContext = createContext(null);
 
+const getWorkspaceCacheKey = (userId) =>
+    `workflowx_workspaces_${userId}`;
+
 export function WorkspaceProvider({ children }) {
     const { user } = useAuth();
+    const userId = user?.id || user?._id || null;
 
     const [workspaces, setWorkspaces] = useState([]);
     const [activeWorkspace, setActiveWorkspace] = useState(null);
@@ -32,7 +36,7 @@ export function WorkspaceProvider({ children }) {
         let cancelled = false;
 
         const loadWorkspaces = async () => {
-            if (!user) {
+            if (!userId) {
                 setWorkspaces([]);
                 setActiveWorkspace(null);
                 setLoading(false);
@@ -42,14 +46,38 @@ export function WorkspaceProvider({ children }) {
             try {
                 setLoading(true);
 
+                const cacheKey = getWorkspaceCacheKey(userId);
+                const cached = JSON.parse(
+                    localStorage.getItem(cacheKey) || "[]"
+                );
+
+                if (Array.isArray(cached) && cached.length > 0) {
+                    setWorkspaces(cached);
+
+                    const storedId = localStorage.getItem(
+                        `workflowx_workspace_${userId}`
+                    );
+                    const cachedSelected =
+                        cached.find(item => item._id === storedId) ||
+                        cached[0];
+
+                    setActiveOrganizationId(cachedSelected._id);
+                    setActiveWorkspace(cachedSelected);
+                }
+
                 const data = await organizationService.getAll();
 
                 if (cancelled) return;
 
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid workspace response");
+                }
+
                 setWorkspaces(data);
+                localStorage.setItem(cacheKey, JSON.stringify(data));
 
                 const storedId = localStorage.getItem(
-                    `workflowx_workspace_${user._id}`
+                    `workflowx_workspace_${userId}`
                 );
 
                 const selected =
@@ -57,12 +85,19 @@ export function WorkspaceProvider({ children }) {
                     data[0] ||
                     null;
 
+                setActiveOrganizationId(selected?._id || null);
+
+                if (selected) {
+                    localStorage.setItem(
+                        `workflowx_workspace_${userId}`,
+                        selected._id
+                    );
+                }
+
                 setActiveWorkspace(selected);
             } catch (error) {
                 if (!cancelled) {
                     console.error("Unable to load workspaces", error);
-                    setWorkspaces([]);
-                    setActiveWorkspace(null);
                 }
             } finally {
                 if (!cancelled) setLoading(false);
@@ -74,7 +109,7 @@ export function WorkspaceProvider({ children }) {
         return () => {
             cancelled = true;
         };
-    }, [user?._id]);
+    }, [userId]);
 
     const switchWorkspace = (workspaceId) => {
         const selected = workspaces.find(
@@ -84,9 +119,10 @@ export function WorkspaceProvider({ children }) {
         if (!selected) return;
 
         setActiveWorkspace(selected);
+        setActiveOrganizationId(selected._id);
 
         localStorage.setItem(
-            `workflowx_workspace_${user._id}`,
+            `workflowx_workspace_${userId}`,
             selected._id
         );
     };
@@ -103,23 +139,26 @@ export function WorkspaceProvider({ children }) {
     //     );
     // };
 
-    const refreshWorkspaces = async () => {
+    const refreshWorkspaces = async (preferredWorkspaceId = null) => {
         try {
             const data = await organizationService.getAll();
-
-            console.log("Fetched Workspaces:", data);
 
             if (!Array.isArray(data)) {
                 throw new Error("Invalid workspace response");
             }
 
             setWorkspaces(data);
+            localStorage.setItem(
+                getWorkspaceCacheKey(userId),
+                JSON.stringify(data)
+            );
 
             const storedId = localStorage.getItem(
-                `workflowx_workspace_${user._id}`
+                `workflowx_workspace_${userId}`
             );
 
             const selected =
+                data.find(item => item._id === preferredWorkspaceId) ||
                 data.find(item => item._id === storedId) ||
                 data.find(item => item._id === activeWorkspace?._id) ||
                 data[0] ||
@@ -128,10 +167,13 @@ export function WorkspaceProvider({ children }) {
             setActiveWorkspace(selected);
 
             if (selected) {
+                setActiveOrganizationId(selected._id);
                 localStorage.setItem(
-                    `workflowx_workspace_${user._id}`,
+                    `workflowx_workspace_${userId}`,
                     selected._id
                 );
+            } else {
+                setActiveOrganizationId(null);
             }
 
             return selected;

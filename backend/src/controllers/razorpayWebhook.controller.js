@@ -1,7 +1,17 @@
 import crypto from "crypto";
 
 import BillingWebhookEvent from "../models/BillingWebhookEvent.js";
+import BillingCheckout from "../models/BillingCheckout.js";
+import Subscription from "../models/Subscription.js";
 import { syncRazorpaySubscription } from "../../services/razorpaySync.service.js";
+
+import {
+    recordBillingPayment
+} from "../../services/billingPayment.service.js";
+
+import {
+    handleFailedPayment
+} from "../../services/billingLifecycle.service.js";
 
 const supportedEvents = new Set([
     "subscription.activated",
@@ -10,7 +20,9 @@ const supportedEvents = new Set([
     "subscription.halted",
     "subscription.cancelled",
     "subscription.completed",
-    "subscription.resumed"
+    "subscription.resumed",
+    "payment.authorized",
+    "payment.failed"
 ]);
 
 export const razorpayWebhook = async (req, res, next) => {
@@ -53,15 +65,63 @@ export const razorpayWebhook = async (req, res, next) => {
 
         const event = JSON.parse(req.body.toString("utf8"));
 
-        if (supportedEvents.has(event.event)) {
-            const subscriptionId =
-                event.payload?.subscription?.entity?.id;
+        const subscriptionEntity =
+            event.payload?.subscription?.entity;
 
-            if (!subscriptionId) {
-                return res.sendStatus(400);
+        const paymentEntity =
+            event.payload?.payment?.entity;
+
+        const subscriptionId =
+            subscriptionEntity?.id ||
+            paymentEntity?.subscription_id;
+
+        if (supportedEvents.has(event.event) && subscriptionId) {
+            // Link the provider subscription before recording payments that
+            // reference the workspace subscription.
+            await syncRazorpaySubscription(subscriptionId);
+
+            const checkout = await BillingCheckout.findOne({
+                razorpaySubscriptionId: subscriptionId
+            });
+
+            const subscription = checkout
+                ? await Subscription.findOne({
+                    organization: checkout.organization,
+                    razorpaySubscriptionId: subscriptionId
+                })
+                : null;
+
+            if (paymentEntity && checkout && subscription) {
+                await recordBillingPayment({
+                    organizationId: checkout.organization,
+                    subscriptionId,
+                    payment: paymentEntity
+                });
             }
 
-            await syncRazorpaySubscription(subscriptionId);
+            if (event.event === "payment.failed" && subscription) {
+                await handleFailedPayment(subscriptionId);
+            }
+
+            if (
+                ["payment.failed", "subscription.halted", "subscription.cancelled", "subscription.completed"]
+                    .includes(event.event)
+            ) {
+                await BillingCheckout.updateOne(
+                    {
+                        razorpaySubscriptionId: subscriptionId,
+                        status: { $in: ["created", "authenticated"] }
+                    },
+                    {
+                        $set: {
+                            status: event.event === "subscription.cancelled" ||
+                                event.event === "subscription.completed"
+                                ? "cancelled"
+                                : "failed"
+                        }
+                    }
+                );
+            }
         }
 
         try {

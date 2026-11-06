@@ -15,6 +15,7 @@ const subscriptionSchema = new mongoose.Schema(
             required: true
         },
 
+        
         status: {
             type: String,
             enum: [
@@ -22,10 +23,13 @@ const subscriptionSchema = new mongoose.Schema(
                 "trialing",
                 "past_due",
                 "cancelled",
-                "expired"
+                "expired",
+                "authenticated",
+                "paused"
             ],
             default: "active"
         },
+
 
         provider: {
             type: String,
@@ -53,10 +57,37 @@ const subscriptionSchema = new mongoose.Schema(
             default: null
         },
 
+        
         cancelAtPeriodEnd: {
             type: Boolean,
             default: false
+        },
+
+        cancelRequestedAt: {
+            type: Date,
+            default: null
+        },
+
+        gracePeriodEndsAt: {
+            type: Date,
+            default: null
+        },
+
+        lastPaymentAt: {
+            type: Date,
+            default: null
+        },
+
+        lastPaymentId: {
+            type: String,
+            default: null
+        },
+
+        nextBillingAt: {
+            type: Date,
+            default: null
         }
+
     },
     { timestamps: true }
 );

@@ -38,6 +38,9 @@ import { razorpayWebhook } from "../src/controllers/razorpayWebhook.controller.j
 
 import razorpayRoutes from "./routes/razorpay.routes.js";
 
+import billingHistoryRoutes from "./routes/billingHistory.routes.js";
+
+
 const app = express();
 
 app.use(cors());
@@ -179,6 +182,11 @@ app.use(
     express.static(
         path.resolve("uploads", "avatars")
     )
+);
+
+app.use(
+    "/api/v1/billing",
+    billingHistoryRoutes
 );
 
 

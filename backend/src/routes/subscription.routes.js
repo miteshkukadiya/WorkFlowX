@@ -8,6 +8,13 @@ import {
     getMySubscription
 } from "../controllers/subscription.controller.js";
 
+import {
+    cancelWorkspaceSubscription
+} from "../controllers/subscriptionLifecycle.controller.js";
+
+import { authorizePermission } from "../middleware/authorizePermission.js";
+import { PERMISSIONS } from "../config/permissions.js";
+
 const router = express.Router();
 
 // Public pricing catalog
@@ -19,6 +26,14 @@ router.get(
     protect,
     requireTenant,
     getMySubscription
+);
+
+router.post(
+    "/cancel",
+    protect,
+    requireTenant,
+    authorizePermission(PERMISSIONS.BILLING_MANAGE),
+    cancelWorkspaceSubscription
 );
 
 export default router;

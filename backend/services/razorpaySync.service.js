@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import Plan from "../src/models/Plan.js";
 import Subscription from "../src/models/Subscription.js";
 import BillingCheckout from "../src/models/BillingCheckout.js";
@@ -48,64 +47,69 @@ export const syncRazorpaySubscription = async (
         expired: "expired"
     };
 
-    const session = await mongoose.startSession();
+    const current = await Subscription.findOne({
+        organization: organizationId
+    });
 
-    try {
-        await session.withTransaction(async () => {
-            const current = await Subscription.findOne({
-                organization: organizationId
-            }).session(session);
+    if (!current) {
+        throw new Error("Workspace subscription missing");
+    }
 
-            if (!current) {
-                throw new Error("Workspace subscription missing");
+    // Never overwrite another active provider subscription.
+    if (
+        current.provider === "razorpay" &&
+        current.razorpaySubscriptionId !== provider.id
+    ) {
+        throw new Error("Different paid subscription already linked");
+    }
+
+    if (active) {
+        current.plan = plan._id;
+        current.provider = "razorpay";
+        current.razorpaySubscriptionId = provider.id;
+        current.status = "active";
+        current.currentPeriodStart =
+            asDate(provider.current_start);
+        current.currentPeriodEnd =
+            asDate(provider.current_end);
+
+        await current.save();
+
+        await BillingCheckout.updateOne(
+            { _id: checkout._id },
+            {
+                $set: {
+                    status: "activated",
+                    activatedAt: new Date()
+                }
             }
+        );
+    } else if (current.razorpaySubscriptionId === provider.id) {
+        current.status =
+            statusMap[provider.status] || "past_due";
 
-            // Never overwrite another active provider subscription.
-            if (
-                current.provider === "razorpay" &&
-                current.razorpaySubscriptionId !== provider.id
-            ) {
-                throw new Error("Different paid subscription already linked");
-            }
+        current.currentPeriodStart =
+            asDate(provider.current_start);
+        current.currentPeriodEnd =
+            asDate(provider.current_end);
 
-            if (active) {
-                current.plan = plan._id;
-                current.provider = "razorpay";
-                current.razorpaySubscriptionId = provider.id;
-                current.status = "active";
-                current.currentPeriodStart =
-                    asDate(provider.current_start);
-                current.currentPeriodEnd =
-                    asDate(provider.current_end);
+        await current.save();
 
-                await current.save({ session });
-
-                await BillingCheckout.updateOne(
-                    { _id: checkout._id },
-                    {
-                        $set: {
-                            status: "activated",
-                            activatedAt: new Date()
-                        }
-                    },
-                    { session }
-                );
-            } else if (
-                current.razorpaySubscriptionId === provider.id
-            ) {
-                current.status =
-                    statusMap[provider.status] || "past_due";
-
-                current.currentPeriodStart =
-                    asDate(provider.current_start);
-                current.currentPeriodEnd =
-                    asDate(provider.current_end);
-
-                await current.save({ session });
-            }
-        });
-    } finally {
-        await session.endSession();
+        if (["halted", "cancelled", "completed", "expired"].includes(provider.status)) {
+            await BillingCheckout.updateOne(
+                {
+                    _id: checkout._id,
+                    status: { $in: ["created", "authenticated"] }
+                },
+                {
+                    $set: {
+                        status: provider.status === "halted"
+                            ? "failed"
+                            : "cancelled"
+                    }
+                }
+            );
+        }
     }
 
     return {

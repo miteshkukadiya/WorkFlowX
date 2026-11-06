@@ -64,50 +64,44 @@ export const createOrganization = async (req, res, next) => {
             });
         }
 
-        // Use a transaction so the organization, owner membership,
-        // and free subscription are created together.
-        const session = await mongoose.startSession();
-
-
-
         let organization;
 
         try {
-            await session.withTransaction(async () => {
-                const [created] = await Organization.create(
-                    [{
-                        name: name.trim(),
-                        slug,
-                        owner: req.user._id
-                    }],
-                    { session }
-                );
-
-                organization = created;
-
-                await OrganizationMember.create(
-                    [{
-                        organization: created._id,
-                        user: req.user._id,
-                        role: "owner",
-                        status: "active"
-                    }],
-                    { session }
-                );
-
-                // Create Free Subscription
-                await Subscription.create(
-                [{
-                    organization: organization._id,
-                    plan: freePlan._id,
-                    status: "active",
-                    provider: "internal"
-                }],
-                { session }
-            );
+            organization = await Organization.create({
+                name: name.trim(),
+                slug,
+                owner: req.user._id
             });
-        } finally {
-            await session.endSession();
+
+            await OrganizationMember.create({
+                organization: organization._id,
+                user: req.user._id,
+                role: "owner",
+                status: "active"
+            });
+
+            await Subscription.create({
+                organization: organization._id,
+                plan: freePlan._id,
+                status: "active",
+                provider: "internal"
+            });
+        } catch (error) {
+            if (organization?._id) {
+                await Promise.all([
+                    Subscription.deleteOne({
+                        organization: organization._id
+                    }),
+                    OrganizationMember.deleteMany({
+                        organization: organization._id
+                    }),
+                    Organization.deleteOne({
+                        _id: organization._id
+                    })
+                ]);
+            }
+
+            throw error;
         }
 
         return res.status(201).json({

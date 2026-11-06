@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import Plan from "../src/models/Plan.js";
 
 const planIds = {
-    pro: "plan_TtMY6xyQ6JIHh8",
-    business: "plan_TtMX9McOjc445Q"
+    pro: "plan_TtMX9McOjc445Q",
+    business: "plan_TtMY6xyQ6JIHh8"
 };
 
 async function main() {
