@@ -4,6 +4,7 @@ import connectDB from "./src/config/db.js";
 import http from "http";
 import { initializeSocket } from "./socket/socket.js";
 import { startBillingScheduler } from "./jobs/billingScheduler.js";
+import { connectRedis } from "./src/config/redis.js";
 
 
 dotenv.config();
@@ -12,7 +13,8 @@ const PORT = process.env.PORT || 5000;
 
 const httpServer = http.createServer(app);
 
-connectDB().then(() => {
+connectDB().then(async () => {
+    await connectRedis();
     startBillingScheduler();
 }).catch((error) => {
     console.error("Database connection failed:", error);

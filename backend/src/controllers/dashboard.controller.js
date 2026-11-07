@@ -2,6 +2,7 @@ import Project from "../models/Project.js";
 import Task from "../models/Task.js";
 import TimeEntry from "../models/TimeEntry.js";
 import Activity from "../models/Activity.js";
+import cacheService from "../../services/cache.service.js";
 
 export const getDashboard =
     async (req, res) => {
@@ -9,31 +10,38 @@ export const getDashboard =
         try {
 
             const userId = req.user._id;
+            const organizationId = req.tenant.organizationId;
+
+            const cacheKey = `workflowx:dashboard:${organizationId}:${userId}`;
+
+            // Check Redis first
+            const cachedDashboard = await cacheService.get(cacheKey);
+
+            if (cachedDashboard) {
+                return res.status(200).json({
+                    success: true,
+                    data: cachedDashboard
+                });
+            }
 
 
             // --------------------------------
             // 1. ACCESSIBLE PROJECTS
             // --------------------------------
 
-            const projects =
-                await Project.find({
-
-                    $or: [
-                        {
-                            owner:
-                                userId
-                        },
-                        {
-                            members:
-                                userId
-                        }
-                    ]
-
-                })
-                .select(
-                    "_id name color owner"
-                )
-                .lean();
+            const projects = await Project.find({
+                organization: organizationId,
+                $or: [
+                    {
+                        owner: userId
+                    },
+                    {
+                        members: userId
+                    }
+                ]
+            })
+            .select("_id name color owner")
+            .lean();
 
 
             const projectIds =
@@ -520,55 +528,40 @@ export const getDashboard =
             // RESPONSE
             // --------------------------------
 
+            
+
+            const dashboardData = {
+                stats: {
+                    totalProjects: projects.length,
+                    totalMyTasks,
+                    completedTasks,
+                    totalTimeSeconds,
+                    overdueCount: overdueTasks.length
+                },
+
+                taskOverview: {
+                    todo: todoTasks,
+                    inProgress: inProgressTasks,
+                    done: completedTasks
+                },
+
+                dueSoon,
+                overdueTasks,
+                recentActivity,
+                weeklyTime,
+                projectProgress
+            };
+
+            // Store dashboard data for 60 seconds
+            await cacheService.set(
+                cacheKey,
+                dashboardData,
+                60
+            );
+
             return res.status(200).json({
-
                 success: true,
-
-                data: {
-
-                    stats: {
-
-                        totalProjects:
-                            projects.length,
-
-                        totalMyTasks,
-
-                        completedTasks,
-
-                        totalTimeSeconds,
-
-                        overdueCount:
-                            overdueTasks.length
-
-                    },
-
-
-                    taskOverview: {
-
-                        todo:
-                            todoTasks,
-
-                        inProgress:
-                            inProgressTasks,
-
-                        done:
-                            completedTasks
-
-                    },
-
-
-                    dueSoon,
-
-                    overdueTasks,
-
-                    recentActivity,
-
-                    weeklyTime,
-
-                    projectProgress
-
-                }
-
+                data: dashboardData
             });
 
 

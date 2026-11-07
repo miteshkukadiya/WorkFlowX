@@ -10,6 +10,8 @@ import createNotification from "../utils/createNotification.js";
 
 import { emitToProject } from "../utils/socketEvents.js";
 
+import invalidateDashboardCache from "../utils/invalidateDashboardCache.js";
+
 
 // CHECK PROJECT ACCESS
 
@@ -194,6 +196,10 @@ export const createTask = async (req, res) => {
                 taskId: String(task._id),
                 projectId: String(task.project)
             }
+        );
+
+        await invalidateDashboardCache(
+            project.organization
         );
 
         return res.status(201).json({
@@ -717,6 +723,10 @@ export const updateTask = async (req, res) => {
             }
         );
 
+        await invalidateDashboardCache(
+            project.organization
+        );
+
         return res.status(200).json({
             success: true,
             message: "Task updated successfully",
@@ -792,6 +802,10 @@ export const deleteTask = async (req, res) => {
         // DELETE TASK
 
         await task.deleteOne();
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         // REAL-TIME TASK DELETED EVENT
 
@@ -941,6 +955,10 @@ export const moveTask = async (req, res) => {
         task.position = parsedPosition;
 
         await task.save();
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         // LOG STATUS CHANGE
 
@@ -1446,6 +1464,10 @@ export const reorderTasks = async (req, res) => {
 
         await Task.bulkWrite(
             operations
+        );
+
+        await invalidateDashboardCache(
+            project.organization
         );
 
         // REAL-TIME TASK REORDERED EVENT

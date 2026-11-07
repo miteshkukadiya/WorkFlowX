@@ -11,6 +11,8 @@ import {
     protect
 } from "../middleware/authMiddleware.js";
 
+import { requireTenant } from "../middleware/tenant.middleware.js";
+
 import {
     uploadTaskAttachment
 } from "../middleware/upload.middleware.js";
@@ -21,6 +23,7 @@ const router =
 
 
 router.use(protect);
+router.use(requireTenant);
 
 
 router.get(

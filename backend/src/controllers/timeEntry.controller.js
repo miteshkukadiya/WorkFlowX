@@ -4,6 +4,8 @@ import TimeEntry from "../models/TimeEntry.js";
 import Task from "../models/Task.js";
 import Project from "../models/Project.js";
 
+import invalidateDashboardCache from "../utils/invalidateDashboardCache.js";
+
 const canTrackTask = async (
     taskId,
     userId
@@ -128,6 +130,10 @@ export const startTimer = async (
 
             });
 
+            await invalidateDashboardCache(
+                access.project.organization
+            );
+
 
         const populatedEntry =
             await TimeEntry.findById(
@@ -226,6 +232,16 @@ export const stopTimer = async (
 
 
         await activeTimer.save();
+
+        const project = await Project.findById(
+            activeTimer.project
+        ).select("organization");
+
+        if (project) {
+            await invalidateDashboardCache(
+                project.organization
+            );
+        }
 
 
         const entry =
@@ -448,6 +464,10 @@ export const createManualEntry = async (
                 isRunning: false
 
             });
+
+            await invalidateDashboardCache(
+                access.project.organization
+            );
 
 
         const populated =

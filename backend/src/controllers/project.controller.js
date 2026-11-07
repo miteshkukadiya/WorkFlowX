@@ -6,6 +6,8 @@ import Task from "../models/Task.js";
 import createNotification from "../utils/createNotification.js";
 import { getIO } from "../../socket/socket.js";
 
+import invalidateDashboardCache from "../utils/invalidateDashboardCache.js";
+
 export const createProject = async (req , res) => {
 
     try{
@@ -35,6 +37,10 @@ export const createProject = async (req , res) => {
             owner: req.user._id,
             members: []
         })
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         return res.status(201).json({
             success: true,
@@ -190,6 +196,10 @@ export const updateProject = async(req,res) => {
 
         await project.save();
 
+        await invalidateDashboardCache(
+            project.organization
+        );
+
         return res.status(200).json({
             success: true,
             message: "Project updated successfully",
@@ -228,6 +238,10 @@ export const deleteProject = async (req, res) => {
                 message: "Project not found or access denied"
             });
         }
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         return res.status(200).json({
             success: true,
@@ -386,6 +400,10 @@ export const addProjectMember = async (
 
 
         await project.save();
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         await createNotification({
 
@@ -644,6 +662,10 @@ export const removeProjectMember = async (
 
 
         await project.save();
+
+        await invalidateDashboardCache(
+            project.organization
+        );
 
         // Revoke removed member's Socket.IO project access
         const io = getIO();

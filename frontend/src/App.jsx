@@ -19,7 +19,6 @@ import TimeTracking from "./pages/TimeTracking";
 import Team from "./pages/Team";
 import TaskDetails from "./pages/TaskDetails";
 import Reports from "./pages/Reports";
-import AllTasks from "./pages/AllTasks";
 import Settings from "./pages/Settings";
 import CreateWorkspace from "./pages/CreateWorkspace";
 import WorkspaceTeam from "./pages/WorkspaceTeam";
@@ -70,7 +69,7 @@ function App() {
                         path="/tasks"
                         element={
                             <AppLayout>
-                                <AllTasks />
+                                <Tasks />
                             </AppLayout>
                         }
                     />
