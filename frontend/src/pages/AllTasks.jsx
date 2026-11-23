@@ -52,7 +52,7 @@ export default function AllTasks() {
         try {
             const data = await savedViewService.getAll();
             setSavedViews(data);
-        } catch (error) {
+        } catch {
             console.error("Saved views error:", error);
         }
     };
@@ -73,7 +73,7 @@ export default function AllTasks() {
             });
 
             await loadSavedViews();
-        } catch (error) {
+        } catch {
             alert(
                 error.response?.data?.message ||
                 "Unable to save view"
@@ -93,7 +93,7 @@ export default function AllTasks() {
         try {
             await savedViewService.delete(id);
             await loadSavedViews();
-        } catch (error) {
+        } catch {
             alert("Unable to delete saved view");
         }
     };

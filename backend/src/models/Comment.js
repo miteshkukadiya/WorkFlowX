@@ -34,6 +34,13 @@ const commentSchema =
                 maxlength: 1000
             },
 
+            parentComment: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Comment",
+                default: null,
+                index: true
+            },
+
             edited: {
                 type: Boolean,
                 default: false

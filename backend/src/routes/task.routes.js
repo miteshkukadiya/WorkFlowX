@@ -16,6 +16,10 @@ import { validate } from "../middleware/validate.js";
 import { createTaskSchema } from "../../validators/task.validator.js";
 import { requireTenant } from "../middleware/tenant.middleware.js";
 import { requireProjectAccess } from "../middleware/projectAccess.middleware.js";
+import {
+    getDependencies,
+    updateDependencies
+} from "../controllers/dependency.controller.js";
 
 const router = express.Router();
 
@@ -41,6 +45,11 @@ router.patch(
     "/:id/move",
     moveTask
 );
+
+router
+    .route("/:id/dependencies")
+    .get(getDependencies)
+    .put(updateDependencies);
 
 router
     .route("/:id")

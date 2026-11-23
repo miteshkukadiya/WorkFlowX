@@ -40,6 +40,31 @@ export default function CommentsSection({
     const [error, setError] =
         useState("");
 
+    const [replyingTo, setReplyingTo] =
+        useState(null);
+
+    const [replyContent, setReplyContent] =
+        useState("");
+
+    const handleReply = async (event, commentId) => {
+        event.preventDefault();
+        const value = replyContent.trim();
+        if (!value) return;
+
+        try {
+            setSending(true);
+            setError("");
+            const reply = await commentService.reply(commentId, value);
+            setComments(previous => [...previous, reply]);
+            setReplyContent("");
+            setReplyingTo(null);
+        } catch (err) {
+            setError(err.response?.data?.message || "Unable to reply to comment");
+        } finally {
+            setSending(false);
+        }
+    };
+
 
     const handleAdd =
         async (event) => {
@@ -427,10 +452,11 @@ export default function CommentsSection({
                                         key={
                                             comment._id
                                         }
-                                        className="
+                                        className={`
                                             flex
                                             gap-3
-                                        "
+                                            ${comment.parentComment ? "ml-8 border-l-2 border-indigo-100 pl-4" : ""}
+                                        `}
                                     >
 
                                         <div className="
@@ -607,6 +633,42 @@ export default function CommentsSection({
 
                                                 </p>
 
+                                            )}
+
+                                            {editingId !== comment._id && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setReplyingTo(comment._id);
+                                                        setReplyContent("");
+                                                    }}
+                                                    className="mt-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+                                                >
+                                                    Reply
+                                                </button>
+                                            )}
+
+                                            {replyingTo === comment._id && (
+                                                <form
+                                                    onSubmit={event => handleReply(event, comment._id)}
+                                                    className="mt-3 flex gap-2"
+                                                >
+                                                    <input
+                                                        value={replyContent}
+                                                        onChange={event => setReplyContent(event.target.value)}
+                                                        maxLength={1000}
+                                                        placeholder="Write a reply..."
+                                                        className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        type="submit"
+                                                        disabled={sending}
+                                                        className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                                                    >
+                                                        Reply
+                                                    </button>
+                                                </form>
                                             )}
 
 

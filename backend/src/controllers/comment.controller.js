@@ -23,7 +23,8 @@ export const addComment = async (
         } = req.params;
 
         const {
-            content
+            content,
+            parentCommentId
         } = req.body;
 
 
@@ -39,7 +40,6 @@ export const addComment = async (
             });
 
         }
-
 
         if (
             content.trim().length > 1000
@@ -74,6 +74,28 @@ export const addComment = async (
 
         }
 
+        let parentComment = null;
+        if (parentCommentId) {
+            if (!mongoose.isValidObjectId(parentCommentId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid parent comment ID"
+                });
+            }
+
+            parentComment = await Comment.findOne({
+                _id: parentCommentId,
+                task: access.task._id
+            });
+
+            if (!parentComment) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Parent comment not found"
+                });
+            }
+        }
+
 
         const comment =
             await Comment.create({
@@ -88,7 +110,9 @@ export const addComment = async (
                     req.user._id,
 
                 content:
-                    content.trim()
+                    content.trim(),
+
+                parentComment: parentComment?._id || null
 
             });
 
@@ -97,10 +121,8 @@ export const addComment = async (
             await Comment.findById(
                 comment._id
             )
-                .populate(
-                    "user",
-                    "name email"
-                );
+                .populate("user", "name email")
+                .populate("parentComment", "user");
 
 
         await logActivity({
@@ -124,7 +146,7 @@ export const addComment = async (
 
         // COMMENT NOTIFICATION
         let notificationRecipient =
-            access.task.assignedTo;
+            parentComment?.user || access.task.assignedTo;
 
 
         // If assignee itself commented,
@@ -152,14 +174,15 @@ export const addComment = async (
                 sender:
                     req.user._id,
 
-                type:
-                    "comment_added",
+                type: "comment_added",
 
                 title:
                     "New task comment",
 
                 message:
-                    `New comment on "${access.task.title}"`,
+                    parentComment
+                        ? `New reply on "${access.task.title}"`
+                        : `New comment on "${access.task.title}"`,
 
                 project:
                     access.project._id,
@@ -207,6 +230,21 @@ export const addComment = async (
 
 };
 
+export const addReply = async (req, res) => {
+    const parent = await Comment.findById(req.params.commentId).select("task");
+
+    if (!parent) {
+        return res.status(404).json({
+            success: false,
+            message: "Parent comment not found"
+        });
+    }
+
+    req.params.taskId = String(parent.task);
+    req.body.parentCommentId = req.params.commentId;
+    return addComment(req, res);
+};
+
 export const getComments = async (
     req,
     res
@@ -247,6 +285,10 @@ export const getComments = async (
                 .populate(
                     "user",
                     "name email"
+                )
+                .populate(
+                    "parentComment",
+                    "user"
                 )
                 .sort({
                     createdAt: 1
@@ -596,5 +638,3 @@ export const deleteComment = async (
     }
 
 };
-
-

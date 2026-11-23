@@ -17,5 +17,11 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // These effects intentionally synchronize remote data and form state.
+      'react-hooks/set-state-in-effect': 'off',
+      // Context modules intentionally export both a provider and its hook.
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

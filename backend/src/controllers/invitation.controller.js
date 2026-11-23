@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import Organization from "../models/Organization.js";
 import OrganizationMember from "../models/OrganizationMember.js";
 import OrganizationInvitation from "../models/OrganizationInvitation.js";
+import cacheService from "../../services/cache.service.js";
 import { WORKSPACE_LIMITS } from "../config/workspaceLimits.js";
 
 const hashToken = (token) =>
@@ -264,6 +265,8 @@ export const acceptInvitation = async (req, res, next) => {
 
             organizationId = invitation.organization;
         });
+
+        await cacheService.delete(`workflowx:members:${organizationId}`);
 
         return res.json({
             success: true,

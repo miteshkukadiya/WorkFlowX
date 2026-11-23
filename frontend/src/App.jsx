@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Projects from "./pages/Projects";
 import Tasks from "./pages/Tasks";
 import KanbanBoard from "./pages/KanbanBoard";
@@ -25,6 +27,11 @@ import WorkspaceTeam from "./pages/WorkspaceTeam";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import WorkspaceAuditLogs from "./pages/WorkspaceAuditLogs";
 import Billing from "./pages/Billing";
+import SprintManagement from "./pages/SprintManagement";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/admin/AdminLayout";
+import AdminDashboard from "./pages/AdminDashboard";
+import Planning from "./pages/Planning";
 
 
 function App() {
@@ -43,6 +50,9 @@ function App() {
                     path="/register"
                     element={<Register />}
                 />
+
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 <Route element={<ProtectedRoute />}>
                     <Route
@@ -70,6 +80,24 @@ function App() {
                         element={
                             <AppLayout>
                                 <Tasks />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/sprints"
+                        element={
+                            <AppLayout>
+                                <SprintManagement />
+                            </AppLayout>
+                        }
+                    />
+
+                    <Route
+                        path="/planning"
+                        element={
+                            <AppLayout>
+                                <Planning />
                             </AppLayout>
                         }
                     />
@@ -172,6 +200,57 @@ function App() {
                             </AppLayout>
                         }
                     />
+
+                    <Route element={<AdminRoute />}>
+                        <Route
+                            path="/admin"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard />
+                                </AdminLayout>
+                            }
+                        />
+                        <Route
+                            path="/admin/organizations"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard section="organizations" />
+                                </AdminLayout>
+                            }
+                        />
+                        <Route
+                            path="/admin/users"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard section="users" />
+                                </AdminLayout>
+                            }
+                        />
+                        <Route
+                            path="/admin/subscriptions"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard section="subscriptions" />
+                                </AdminLayout>
+                            }
+                        />
+                        <Route
+                            path="/admin/payments"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard section="payments" />
+                                </AdminLayout>
+                            }
+                        />
+                        <Route
+                            path="/admin/audit-logs"
+                            element={
+                                <AdminLayout>
+                                    <AdminDashboard section="audit-logs" />
+                                </AdminLayout>
+                            }
+                        />
+                    </Route>
 
 
                 </Route>

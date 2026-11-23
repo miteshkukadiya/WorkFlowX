@@ -1,6 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import Plan from "../src/models/Plan.js";
+import cacheService from "../services/cache.service.js";
 
 const planIds = {
     pro: "plan_TtMX9McOjc445Q",
@@ -26,6 +27,8 @@ async function main() {
 
             console.log(`${code}: ${plan.razorpayPlanId}`);
         }
+
+        await cacheService.delete("workflowx:plans:active");
     } finally {
         await mongoose.disconnect();
     }

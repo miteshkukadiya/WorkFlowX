@@ -15,6 +15,7 @@ import {
 import {
     reportService
 } from "../services/reportService";
+import { taskService } from "../services/taskService";
 
 import ReportStatCard
     from "../components/reports/ReportStatCard";
@@ -79,6 +80,33 @@ export default function Reports() {
         error,
         setError
     ] = useState("");
+
+    const exportCsv = async () => {
+        try {
+            const tasks = await taskService.getAll();
+            const rows = [
+                ["Title", "Project", "Status", "Priority", "Assignee", "Due date"],
+                ...tasks.map(task => [
+                    task.title,
+                    task.project?.name || "",
+                    task.status,
+                    task.priority,
+                    task.assignedTo?.name || "",
+                    task.dueDate || ""
+                ])
+            ];
+            const csv = rows
+                .map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(","))
+                .join("\r\n");
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+            link.download = "workflowx-report.csv";
+            link.click();
+            URL.revokeObjectURL(link.href);
+        } catch (exportError) {
+            setError(exportError.response?.data?.message || "Unable to export CSV");
+        }
+    };
 
 
     const loadReport =
@@ -292,15 +320,9 @@ export default function Reports() {
                 </div>
 
 
+                <div className="flex flex-wrap gap-2">
                 <button
-                    onClick={() =>
-                        loadReport(
-                            true
-                        )
-                    }
-                    disabled={
-                        refreshing
-                    }
+                    onClick={exportCsv}
                     className="
                         inline-flex
                         items-center
@@ -317,22 +339,25 @@ export default function Reports() {
                         text-slate-700
                         shadow-sm
                         hover:bg-slate-50
-                        disabled:opacity-50
                     "
                 >
-
-                    <RefreshCw
-                        size={16}
-                        className={
-                            refreshing
-                                ? "animate-spin"
-                                : ""
-                        }
-                    />
-
-                    Refresh
-
+                    CSV Export
                 </button>
+                <button
+                    onClick={() => window.print()}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+                >
+                    PDF Export
+                </button>
+                <button
+                    onClick={() => loadReport(true)}
+                    disabled={refreshing}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+                >
+                    <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                    Refresh
+                </button>
+                </div>
 
             </div>
 

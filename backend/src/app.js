@@ -41,6 +41,7 @@ import razorpayRoutes from "./routes/razorpay.routes.js";
 import billingHistoryRoutes from "./routes/billingHistory.routes.js";
 
 import platformAdminRoutes from "./routes/platformAdmin.routes.js";
+import sprintRoutes from "./routes/sprint.routes.js";
 
 const app = express();
 
@@ -120,6 +121,8 @@ app.use(
     "/api/v1/tasks",
     taskRoutes
 );
+
+app.use("/api/v1/sprints", sprintRoutes);
 
 app.use(
     "/api/v1/time",

@@ -612,11 +612,11 @@ const handleDragEnd = async (event) => {
         getColumnTasks(newStatus);
 
 
-    let newPosition = 0;
+    let newPosition;
 
     // This variable will contain
     // the FINAL updated frontend tasks.
-    let updatedTasks = [];
+    let updatedTasks;
 
 
     // ========================================
@@ -653,9 +653,6 @@ const handleDragEnd = async (event) => {
                 oldIndex,
                 newIndex
             );
-
-
-        newPosition = newIndex;
 
 
         // Create map:

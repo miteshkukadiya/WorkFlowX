@@ -2,6 +2,7 @@ import express from "express";
 
 import {
     addComment,
+    addReply,
     getComments,
     updateComment,
     deleteComment
@@ -31,6 +32,11 @@ router
     .route("/:commentId")
     .patch(updateComment)
     .delete(deleteComment);
+
+router.post(
+    "/:commentId/replies",
+    addReply
+);
 
 
 export default router;

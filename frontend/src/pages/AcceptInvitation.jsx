@@ -7,7 +7,7 @@ import { useWorkspace } from "../context/WorkspaceContext";
 export default function AcceptInvitation() {
     const [params] = useSearchParams();
     const navigate = useNavigate();
-    const { refreshWorkspaces, switchWorkspace } = useWorkspace();
+    const { refreshWorkspaces } = useWorkspace();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -24,8 +24,7 @@ export default function AcceptInvitation() {
             setLoading(true);
             setError("");
 
-            const response =
-                await workspaceTeamService.acceptInvitation(token);
+            await workspaceTeamService.acceptInvitation(token);
 
             await refreshWorkspaces();
 

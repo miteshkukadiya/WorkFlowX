@@ -8,6 +8,9 @@ import { getIO } from "../../socket/socket.js";
 
 import invalidateDashboardCache from "../utils/invalidateDashboardCache.js";
 
+import cacheService from "../../services/cache.service.js";
+import invalidateProjectCache from "../utils/invalidateProjectCache.js";
+
 export const createProject = async (req , res) => {
 
     try{
@@ -38,6 +41,8 @@ export const createProject = async (req , res) => {
             members: []
         })
 
+        await invalidateProjectCache(req.tenant.organizationId);
+
         await invalidateDashboardCache(
             project.organization
         );
@@ -60,6 +65,17 @@ export const createProject = async (req , res) => {
 export const getProjects = async (req , res) => {
     try {
 
+        const organizationId = String(req.tenant.organizationId);
+        const userId = String(req.user._id);
+
+        const cacheKey = `workflowx:projects:${organizationId}:${userId}:all`;
+
+        const cachedProjects = await cacheService.get(cacheKey);
+
+        if (cachedProjects) {
+            return res.status(200).json(cachedProjects);
+        }
+
         const projects = await Project.find({
             organization: req.tenant.organizationId,
             $or :[
@@ -72,12 +88,15 @@ export const getProjects = async (req , res) => {
             .populate("members", "name email role")
             .sort({ createdAt: -1 });
 
-            return res.status(200).json({
+            const responseData = {
                 success: true,
                 count: projects.length,
                 data: projects
-            })
+            };
 
+            await cacheService.set(cacheKey, responseData, 120);
+
+            return res.status(200).json(responseData);
         
     } catch (error) {
         return res.status(500).json({
@@ -100,6 +119,17 @@ export const getProjectById = async (req , res) => {
             });
         }
 
+        const organizationId = String(req.tenant.organizationId);
+        const userId = String(req.user._id);
+
+        const cacheKey = `workflowx:projects:${organizationId}:${userId}:${id}`;
+
+        const cachedProject = await cacheService.get(cacheKey);
+
+        if (cachedProject) {
+            return res.status(200).json(cachedProject);
+        }
+
         const project = await Project.findOne({
             _id: id,
             organization: req.tenant.organizationId,
@@ -119,10 +149,14 @@ export const getProjectById = async (req , res) => {
             });
         }
 
-        return res.status(200).json({
+        const responseData = {
             success: true,
             data: project
-        });
+        };
+
+        await cacheService.set(cacheKey, responseData, 120);
+
+        return res.status(200).json(responseData);
 
     } catch (error) {
         return res.status(500).json({
@@ -196,6 +230,8 @@ export const updateProject = async(req,res) => {
 
         await project.save();
 
+        await invalidateProjectCache(req.tenant.organizationId);
+
         await invalidateDashboardCache(
             project.organization
         );
@@ -238,6 +274,9 @@ export const deleteProject = async (req, res) => {
                 message: "Project not found or access denied"
             });
         }
+
+        await invalidateProjectCache(req.tenant.organizationId);
+
 
         await invalidateDashboardCache(
             project.organization
@@ -400,6 +439,8 @@ export const addProjectMember = async (
 
 
         await project.save();
+
+        await invalidateProjectCache(req.tenant.organizationId);
 
         await invalidateDashboardCache(
             project.organization
@@ -605,8 +646,10 @@ export const removeProjectMember = async (
         }
 
 
-        const project =
-            await Project.findById(id);
+        const project = await Project.findOne({
+            _id: id,
+            organization: req.tenant.organizationId
+        });
 
 
         if (!project) {
@@ -662,6 +705,8 @@ export const removeProjectMember = async (
 
 
         await project.save();
+
+        await invalidateProjectCache(req.tenant.organizationId);
 
         await invalidateDashboardCache(
             project.organization

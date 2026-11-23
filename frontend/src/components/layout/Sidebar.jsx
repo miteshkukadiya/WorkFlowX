@@ -7,11 +7,11 @@ import {
     Users,
     Settings,
     X,
-    ListTodo,
     Columns3,
     Building2,
     ScrollText,
     CreditCard
+    , CalendarRange, GitBranch
 } from "lucide-react";
 
 
@@ -44,6 +44,16 @@ const Sidebar = ({
             label: "All Tasks",
             icon: CheckSquare,
             path: "/tasks"
+        },
+        {
+            label: "Sprints & Backlog",
+            icon: CalendarRange,
+            path: "/sprints"
+        },
+        {
+            label: "Planning",
+            icon: GitBranch,
+            path: "/planning"
         },
         {
             label: "Time Tracking",

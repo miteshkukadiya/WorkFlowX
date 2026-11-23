@@ -18,16 +18,27 @@ export const commentService = {
 
     create: async (
         taskId,
-        content
+        content,
+        parentCommentId = null
     ) => {
 
         const response =
             await api.post(
                 `/comments/task/${taskId}`,
                 {
-                    content
+                    content,
+                    ...(parentCommentId ? { parentCommentId } : {})
                 }
             );
+
+        return response.data.data;
+    },
+
+    reply: async (commentId, content) => {
+        const response = await api.post(
+            `/comments/${commentId}/replies`,
+            { content }
+        );
 
         return response.data.data;
     },

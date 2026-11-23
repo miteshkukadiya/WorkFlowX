@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 import Task from "../models/Task.js";
+import Sprint from "../models/Sprint.js";
 
 import Project from "../models/Project.js";
 
@@ -228,9 +229,10 @@ export const getTasks = async (req, res) => {
 
     try {
 
-        const { projectId, status, priority } = req.query;
+        const { projectId, status, priority, sprintId, backlog } = req.query;
 
         const accessibleProjects = await Project.find({
+            organization: req.tenant.organizationId,
 
             $or: [
                 { owner: req.user._id },
@@ -285,10 +287,18 @@ export const getTasks = async (req, res) => {
             filter.priority = priority;
         }
 
+        if (sprintId) {
+            if (!mongoose.isValidObjectId(sprintId)) return res.status(400).json({ success: false, message: "Invalid sprint ID" });
+            filter.sprint = sprintId;
+        } else if (backlog === "true") {
+            filter.sprint = null;
+        }
+
         const tasks = await Task.find(filter)
             .populate("project", "name color owner")
             .populate("assignedTo", "name email")
             .populate("createdBy", "name email")
+            .populate("dependencies", "title status dueDate")
             .sort({
                 status: 1,
                 position: 1,
@@ -463,7 +473,8 @@ export const updateTask = async (req, res) => {
                 "priority",
                 "dueDate",
                 "estimatedHours",
-                "assignedTo"
+                "assignedTo",
+                "sprint"
             ];
 
             for (const field of allowedFields) {
@@ -472,6 +483,19 @@ export const updateTask = async (req, res) => {
 
                     task[field] = req.body[field];
 
+                }
+
+                if (req.body.sprint !== undefined && req.body.sprint) {
+                    const sprint = await Sprint.findOne({
+                        _id: req.body.sprint,
+                        project: task.project
+                    }).select("_id");
+                    if (!sprint) {
+                        return res.status(400).json({
+                            success: false,
+                            message: "Sprint must belong to the task project"
+                        });
+                    }
                 }
 
             }

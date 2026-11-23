@@ -1,11 +1,19 @@
 import mongoose from "mongoose";
 
 import Notification from "../models/Notification.js";
+import cacheService from "../../services/cache.service.js";
+import invalidateNotificationCache from "../utils/invalidateNotificationCache.js";
 
 export const getNotifications =
     async (req, res) => {
 
         try {
+            const cacheKey = `workflowx:notifications:${req.user._id}:all`;
+            const cachedNotifications = await cacheService.get(cacheKey);
+
+            if (cachedNotifications) {
+                return res.status(200).json(cachedNotifications);
+            }
 
             const notifications =
                 await Notification.find({
@@ -35,7 +43,7 @@ export const getNotifications =
                     .limit(50);
 
 
-            return res.status(200).json({
+            const responseData = {
 
                 success: true,
 
@@ -45,7 +53,11 @@ export const getNotifications =
                 data:
                     notifications
 
-            });
+            };
+
+            await cacheService.set(cacheKey, responseData, 30);
+
+            return res.status(200).json(responseData);
 
 
         } catch (error) {
@@ -67,6 +79,13 @@ export const getUnreadCount =
     async (req, res) => {
 
         try {
+            const cacheKey =
+                `workflowx:notifications:${req.user._id}:unread-count`;
+            const cachedUnreadCount = await cacheService.get(cacheKey);
+
+            if (cachedUnreadCount) {
+                return res.status(200).json(cachedUnreadCount);
+            }
 
             const count =
                 await Notification.countDocuments({
@@ -80,7 +99,7 @@ export const getUnreadCount =
                 });
 
 
-            return res.status(200).json({
+            const responseData = {
 
                 success: true,
 
@@ -88,7 +107,11 @@ export const getUnreadCount =
                     count
                 }
 
-            });
+            };
+
+            await cacheService.set(cacheKey, responseData, 30);
+
+            return res.status(200).json(responseData);
 
 
         } catch (error) {
@@ -165,6 +188,8 @@ export const markAsRead =
 
             }
 
+            await invalidateNotificationCache(req.user._id);
+
 
             return res.status(200).json({
 
@@ -219,6 +244,8 @@ export const markAllAsRead =
                         }
                     }
                 );
+
+            await invalidateNotificationCache(req.user._id);
 
 
             return res.status(200).json({
@@ -297,6 +324,8 @@ export const deleteNotification =
 
             }
 
+            await invalidateNotificationCache(req.user._id);
+
 
             return res.status(200).json({
 
@@ -322,4 +351,3 @@ export const deleteNotification =
         }
 
     };
-

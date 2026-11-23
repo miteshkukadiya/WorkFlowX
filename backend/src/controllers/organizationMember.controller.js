@@ -4,9 +4,20 @@ import Organization from "../models/Organization.js";
 import Project from "../models/Project.js";
 import { writeAuditLog } from "../../services/audit.service.js";
 import { getIO } from "../../socket/socket.js";
+import cacheService from "../../services/cache.service.js";
+import invalidateProjectCache from "../utils/invalidateProjectCache.js";
+import invalidateDashboardCache from "../utils/invalidateDashboardCache.js";
 
 export const getMembers = async (req, res, next) => {
     try {
+        const organizationId = String(req.tenant.organizationId);
+        const cacheKey = `workflowx:members:${organizationId}`;
+        const cachedMembers = await cacheService.get(cacheKey);
+
+        if (cachedMembers) {
+            return res.json(cachedMembers);
+        }
+
         const members = await OrganizationMember.find({
             organization: req.tenant.organizationId
         })
@@ -14,10 +25,14 @@ export const getMembers = async (req, res, next) => {
             .sort({ joinedAt: 1 })
             .lean();
 
-        return res.json({
+        const responseData = {
             success: true,
             data: members
-        });
+        };
+
+        await cacheService.set(cacheKey, responseData, 120);
+
+        return res.json(responseData);
     } catch (error) {
         next(error);
     }
@@ -92,6 +107,11 @@ export const updateMemberRole = async (req, res, next) => {
         // Update member role
         member.role = role;
         await member.save();
+        await cacheService.delete(
+            `workflowx:members:${req.tenant.organizationId}`
+        );
+        await invalidateProjectCache(req.tenant.organizationId);
+        await invalidateDashboardCache(req.tenant.organizationId);
 
         return res.json({
             success: true,
@@ -239,6 +259,12 @@ export const removeMember = async (req, res, next) => {
             // Disconnect removed user's existing sockets
             io.in(userRoom).disconnectSockets(true);
         }
+
+        await cacheService.delete(
+            `workflowx:members:${req.tenant.organizationId}`
+        );
+        await invalidateProjectCache(req.tenant.organizationId);
+        await invalidateDashboardCache(req.tenant.organizationId);
 
 
         return res.json({

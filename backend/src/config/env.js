@@ -16,6 +16,13 @@ const envSchema = z.object({
 
     FRONTEND_URL: z.string().url(),
 
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().int().positive().optional(),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_SECURE: z.enum(["true", "false"]).optional(),
+    EMAIL_FROM: z.string().min(1).optional(),
+
     RAZORPAY_KEY_ID: z.string().min(1).optional(),
     RAZORPAY_KEY_SECRET: z.string().min(1).optional(),
 

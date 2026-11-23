@@ -9,7 +9,6 @@ import {
     CalendarDays,
     Clock3,
     FolderKanban,
-    MessageSquare,
     UserRound
 } from "lucide-react";
 

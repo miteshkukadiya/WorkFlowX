@@ -4,6 +4,18 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+
+const sendPasswordResetEmail = async (email, token) => {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    const { sendEmail } = await import("../services/email.service.js");
+    await sendEmail({
+        to: email,
+        subject: "Reset your WorkFlowX password",
+        text: `Reset your password using this link: ${resetUrl}. This link expires in 15 minutes.`,
+        html: `<p>Reset your WorkFlowX password:</p><p><a href="${resetUrl}">Reset password</a></p><p>This link expires in 15 minutes.</p>`
+    });
+};
 
 
 // register user
@@ -165,4 +177,45 @@ const getCurrentUser = asyncHandler(async (req , res) => {
 
 })
 
-module.exports = {registerUser , loginUser , getCurrentUser};
+const forgotPassword = asyncHandler(async (req, res) => {
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const genericMessage = "If an account exists for this email, a reset link has been sent.";
+    const user = await User.findOne({ email }).select("+passwordResetToken +passwordResetExpires");
+
+    if (user) {
+        const token = crypto.randomBytes(32).toString("hex");
+        user.passwordResetToken = crypto.createHash("sha256").update(token).digest("hex");
+        user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await user.save({ validateBeforeSave: false });
+        await sendPasswordResetEmail(user.email, token);
+    }
+
+    res.status(200).json(new ApiResponse(200, null, genericMessage));
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token, password } = req.body;
+    if (typeof token !== "string" || typeof password !== "string" || password.length < 6) {
+        throw new ApiError(400, "A valid token and password of at least 6 characters are required");
+    }
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: new Date() }
+    }).select("+password +passwordResetToken +passwordResetExpires");
+
+    if (!user) {
+        throw new ApiError(400, "Reset token is invalid or expired");
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.passwordChangedAt = new Date();
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, null, "Password reset successfully"));
+});
+
+module.exports = {registerUser , loginUser , getCurrentUser, forgotPassword, resetPassword};

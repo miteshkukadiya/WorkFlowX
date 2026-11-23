@@ -2,6 +2,7 @@ import Plan from "../models/Plan.js";
 import Project from "../models/Project.js";
 import OrganizationMember from "../models/OrganizationMember.js";
 import OrganizationInvitation from "../models/OrganizationInvitation.js";
+import cacheService from "../../services/cache.service.js";
 
 import {
     getWorkspaceSubscription,
@@ -11,6 +12,13 @@ import {
 
 export const getPlans = async (req, res, next) => {
     try {
+        const cacheKey = "workflowx:plans:active";
+        const cachedPlans = await cacheService.get(cacheKey);
+
+        if (cachedPlans) {
+            return res.json(cachedPlans);
+        }
+
         const plans = await Plan.find({
             isActive: true
         })
@@ -18,10 +26,14 @@ export const getPlans = async (req, res, next) => {
             .sort({ price: 1 })
             .lean();
 
-        res.json({
+        const responseData = {
             success: true,
             data: plans
-        });
+        };
+
+        await cacheService.set(cacheKey, responseData, 3600);
+
+        res.json(responseData);
     } catch (error) {
         next(error);
     }

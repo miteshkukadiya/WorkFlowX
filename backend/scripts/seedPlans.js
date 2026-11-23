@@ -1,6 +1,7 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 import Plan from "../src/models/Plan.js";
+import cacheService from "../services/cache.service.js";
 
 const plans = [
     {
@@ -72,6 +73,7 @@ async function seed() {
             );
         }
 
+        await cacheService.delete("workflowx:plans:active");
         console.log("Subscription plans seeded");
     } catch (error) {
         console.error(error);

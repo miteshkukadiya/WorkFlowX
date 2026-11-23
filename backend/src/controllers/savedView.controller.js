@@ -1,15 +1,28 @@
 import SavedView from "../models/SavedView.js";
+import cacheService from "../../services/cache.service.js";
+import invalidateSavedViewCache from "../utils/invalidateSavedViewCache.js";
 
 export const getSavedViews = async (req, res) => {
     try {
+        const cacheKey = `workflowx:saved-views:${req.user._id}`;
+        const cachedViews = await cacheService.get(cacheKey);
+
+        if (cachedViews) {
+            return res.json(cachedViews);
+        }
+
         const views = await SavedView.find({
             user: req.user._id
         }).sort({ createdAt: -1 });
 
-        return res.json({
+        const responseData = {
             success: true,
             data: views
-        });
+        };
+
+        await cacheService.set(cacheKey, responseData, 300);
+
+        return res.json(responseData);
 
     } catch (error) {
         return res.status(500).json({
@@ -35,6 +48,8 @@ export const createSavedView = async (req, res) => {
             name: name.trim(),
             filters: filters || {}
         });
+
+        await invalidateSavedViewCache(req.user._id);
 
         return res.status(201).json({
             success: true,
@@ -69,6 +84,8 @@ export const deleteSavedView = async (req, res) => {
                 message: "Saved view not found"
             });
         }
+
+        await invalidateSavedViewCache(req.user._id);
 
         return res.json({
             success: true,

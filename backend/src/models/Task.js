@@ -21,6 +21,20 @@ const taskSchema = new mongoose.Schema(
             required: true
         },
 
+        sprint: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Sprint",
+            default: null,
+            index: true
+        },
+
+        dependencies: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Task"
+            }
+        ],
+
         assignedTo: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",

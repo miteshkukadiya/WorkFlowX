@@ -221,12 +221,12 @@ const Login = () => {
                                             Password
                                         </label>
 
-                                        <button
-                                            type="button"
+                                        <Link
+                                            to="/forgot-password"
                                             className="text-xs font-semibold text-slate-600 hover:text-slate-900"
                                         >
                                             Forgot password?
-                                        </button>
+                                        </Link>
 
                                     </div>
 
