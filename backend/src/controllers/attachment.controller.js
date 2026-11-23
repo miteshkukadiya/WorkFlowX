@@ -13,6 +13,11 @@ import getTaskAccess
 import logActivity
     from "../utils/logActivity.js";
 
+import {
+    uploadToCloudinary,
+    deleteFromCloudinary
+} from "../../services/cloudinary.service.js";
+
 
 
 export const uploadAttachment =
@@ -34,15 +39,6 @@ export const uploadAttachment =
 
 
             if (!access.allowed) {
-
-                if (req.file?.path) {
-
-                    await fs.unlink(
-                        req.file.path
-                    ).catch(() => {});
-
-                }
-
 
                 return res
                     .status(access.status)
@@ -68,6 +64,16 @@ export const uploadAttachment =
             }
 
 
+            const uploaded =
+                await uploadToCloudinary(
+                    req.file.buffer,
+                    {
+                        folder: "workflowx/tasks",
+                        mimeType: req.file.mimetype,
+                        originalName: req.file.originalname
+                    }
+                );
+
             const attachment =
                 await Attachment.create({
 
@@ -84,16 +90,16 @@ export const uploadAttachment =
                         req.file.originalname,
 
                     storedName:
-                        req.file.filename,
+                        uploaded.publicId,
 
                     mimeType:
                         req.file.mimetype,
 
                     size:
-                        req.file.size,
+                        uploaded.bytes,
 
                     path:
-                        req.file.path
+                        uploaded.url
 
                 });
 
@@ -148,15 +154,6 @@ export const uploadAttachment =
 
 
         } catch (error) {
-
-            if (req.file?.path) {
-
-                await fs.unlink(
-                    req.file.path
-                ).catch(() => {});
-
-            }
-
 
             return res.status(500).json({
 
@@ -310,28 +307,30 @@ export const downloadAttachment =
             }
 
 
+            if (
+                /^https?:\/\//i.test(
+                    attachment.path
+                )
+            ) {
+                return res.redirect(
+                    attachment.path
+                );
+            }
+
             const filePath =
                 path.resolve(
                     attachment.path
                 );
 
-
             try {
-
-                await fs.access(
-                    filePath
-                );
-
+                await fs.access(filePath);
             } catch {
-
                 return res.status(404).json({
                     success: false,
                     message:
                         "File no longer exists"
                 });
-
             }
-
 
             return res.download(
                 filePath,
@@ -457,9 +456,20 @@ export const deleteAttachment =
             );
 
 
-            await fs.unlink(
-                filePath
-            ).catch(() => {});
+            if (
+                /^https?:\/\//i.test(
+                    filePath
+                )
+            ) {
+                await deleteFromCloudinary(
+                    attachment.storedName,
+                    attachment.mimeType
+                );
+            } else {
+                await fs.unlink(
+                    filePath
+                ).catch(() => {});
+            }
 
 
             await logActivity({

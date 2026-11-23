@@ -13,6 +13,38 @@ import { razorpayService } from "../services/razorpayService";
 import { loadRazorpay } from "../utils/loadRazorpay";
 import BillingHistory from "../components/billing/BillingHistory";
 
+function getRazorpayPaymentErrorMessage(error, testMode) {
+    const code = error?.code || error?.reason || "";
+    const description = error?.description || "";
+    const combined = `${code} ${description}`.toLowerCase();
+
+    if (
+        combined.includes("international") &&
+        combined.includes("card")
+    ) {
+        if (testMode) {
+            return "International cards are not supported in this Razorpay test checkout. Use the recurring test card 4718 6091 0820 4366 with a future expiry date and any CVV.";
+        }
+
+        return "International cards are not supported. Use a supported domestic card or enable international card payments in your Razorpay account.";
+    }
+
+    if (
+        combined.includes("recurring") ||
+        combined.includes("subscription")
+    ) {
+        if (testMode) {
+            return "This card is not eligible for recurring subscriptions. In Razorpay Test Mode, use card 4718 6091 0820 4366.";
+        }
+
+        return "This card is not eligible for recurring subscriptions. Try a supported card or contact Razorpay support.";
+    }
+
+    return code
+        ? `Razorpay payment failed (${code}): ${description || "Payment authorization failed"}`
+        : description || "Payment authorization failed";
+}
+
 function UsageBar({ label, current, max, icon: Icon }) {
     const unlimited = max === -1;
 
@@ -199,15 +231,11 @@ export default function Billing() {
 
             instance.on("payment.failed", (response) => {
                 const paymentError = response.error || {};
-                const description = paymentError.description || "";
-                const code = paymentError.code || paymentError.reason || "";
-
                 setError(
-                    code
-                        ? `Razorpay payment failed (${code}): ${description || "Payment authorization failed"}`
-                        : /recurring/i.test(description)
-                            ? "આ card recurring subscription માટે eligible નથી. Razorpay Test Modeમાં subscription test card 4718 6091 0820 4366 વાપરો."
-                            : description || "Payment authorization failed"
+                    getRazorpayPaymentErrorMessage(
+                        paymentError,
+                        checkout.testMode
+                    )
                 );
                 razorpayService.cancelCheckout(checkout.subscriptionId)
                     .catch((cancelError) => {

@@ -74,7 +74,9 @@ export default function ProfileSettings({
     };
 
     const avatarUrl = profile?.avatar
-        ? `${import.meta.env.VITE_API_ORIGIN || "http://localhost:5000"}${profile.avatar}`
+        ? /^https?:\/\//i.test(profile.avatar)
+            ? profile.avatar
+            : `${import.meta.env.VITE_API_ORIGIN || "http://localhost:5000"}${profile.avatar}`
         : null;
 
     return (

@@ -23,13 +23,6 @@ export const settingsService = {
         const formData = new FormData();
         formData.append("avatar", file, file.name);
 
-        console.log("Uploading avatar:", {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            formDataFile: formData.get("avatar")
-        });
-
         const response = await api.post(
             "/settings/avatar",
             formData,

@@ -122,7 +122,9 @@ export default function Dashboard() {
                 "
             >
                 <p className="font-semibold text-red-700">
-                    Dashboard failed to load
+                    Dashboard failed to load.
+                    <br></br>
+                    Create Workspace First.
                 </p>
 
                 <p className="mt-1 text-sm text-red-600">

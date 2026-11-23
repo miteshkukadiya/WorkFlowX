@@ -1,7 +1,9 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
-import fs from "fs/promises";
-import path from "path";
+import {
+    uploadToCloudinary,
+    deleteFromCloudinary
+} from "../../services/cloudinary.service.js";
 
 const publicUser = (user) => ({
     _id: user._id,
@@ -121,8 +123,6 @@ export const uploadAvatar = async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            await fs.unlink(req.file.path).catch(() => {});
-
             return res.status(404).json({
                 success: false,
                 message: "User not found"
@@ -130,21 +130,24 @@ export const uploadAvatar = async (req, res) => {
         }
 
         const oldAvatar = user.avatar;
+        const uploaded =
+            await uploadToCloudinary(
+                req.file.buffer,
+                {
+                    folder: "workflowx/avatars",
+                    mimeType: req.file.mimetype,
+                    originalName: req.file.originalname
+                }
+            );
 
-        user.avatar = `/uploads/avatars/${req.file.filename}`;
+        user.avatar = uploaded.url;
 
         await user.save();
 
-        // Delete previous local avatar after saving the new one
-        if (oldAvatar?.startsWith("/uploads/avatars/")) {
-            const oldFilename = path.basename(oldAvatar);
-            const oldPath = path.resolve(
-                "uploads",
-                "avatars",
-                oldFilename
-            );
-
-            await fs.unlink(oldPath).catch(() => {});
+        if (oldAvatar?.includes("res.cloudinary.com")) {
+            const publicId =
+                oldAvatar.match(/\/upload\/(?:v\d+\/)?(.+)\.[^/.]+$/)?.[1];
+            await deleteFromCloudinary(publicId, "image/jpeg");
         }
 
         return res.json({
@@ -154,10 +157,6 @@ export const uploadAvatar = async (req, res) => {
         });
 
     } catch (error) {
-        if (req.file?.path) {
-            await fs.unlink(req.file.path).catch(() => {});
-        }
-
         return res.status(500).json({
             success: false,
             message: "Unable to upload avatar"

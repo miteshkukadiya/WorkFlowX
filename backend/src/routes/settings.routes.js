@@ -27,20 +27,7 @@ router.patch("/profile", updateProfile);
 
 router.post(
     "/avatar",
-
-    (req, res, next) => {
-        console.log("Avatar request Content-Type:", req.headers["content-type"]);
-        next();
-    },
-
     avatarUpload.single("avatar"),
-
-    (req, res, next) => {
-        console.log("Avatar req.file:", req.file);
-        console.log("Avatar req.body:", req.body);
-        next();
-    },
-
     uploadAvatar
 );
 
