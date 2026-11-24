@@ -30,6 +30,6 @@ initializeSocket(httpServer);
 //     console.log(`Server is running on port ${process.env.PORT}`);
 // })
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
 });
