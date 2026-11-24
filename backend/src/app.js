@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors";
+// import cors from "cors";
 import path from "path";
 import errorMiddleware from "./middleware/errorMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -45,22 +45,17 @@ import sprintRoutes from "./routes/sprint.routes.js";
 
 const app = express();
 
-const corsOptions = {
-  origin: ["https://workflowx-sigma.vercel.app"],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
 
-app.use(cors(corsOptions));
 
 // app.use(cors());
+
+// 2. CORS
+app.use(corsMiddleware);
+
 
 // 1. Security headers
 app.use(securityHeaders);
 
-// 2. CORS
-app.use(corsMiddleware);
 
 app.post(
     "/api/v1/webhooks/razorpay",

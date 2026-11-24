@@ -5,8 +5,9 @@ import rateLimit from "express-rate-limit";
 import { env } from "../config/env.js";
 
 const allowedOrigins = [
+    "https://workflowx-sigma.vercel.app",
     env.FRONTEND_URL
-];
+].filter(Boolean);
 
 export const securityHeaders = helmet();
 
