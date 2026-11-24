@@ -12,3 +12,6 @@ frontend/.env
 
 uploads/tasks/*
 !uploads/tasks/.gitkeep
+
+git rm --cached frontend/.env
+git rm --cached backend/.env
