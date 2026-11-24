@@ -45,7 +45,16 @@ import sprintRoutes from "./routes/sprint.routes.js";
 
 const app = express();
 
-app.use(cors());
+const corsOptions = {
+  origin: ["https://workflowx-sigma.vercel.app"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
+// app.use(cors());
 
 // 1. Security headers
 app.use(securityHeaders);
