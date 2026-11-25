@@ -2,6 +2,7 @@ import {
     createContext,
     useContext,
     useEffect,
+    useCallback,
     useState
 } from "react";
 
@@ -13,6 +14,13 @@ export const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const updateUser = useCallback((updatedUser) => {
+        if (updatedUser?.preferences?.timezone) {
+            localStorage.setItem("workflowx_timezone", updatedUser.preferences.timezone);
+        }
+        setUser(current => current ? { ...current, ...updatedUser } : updatedUser);
+    }, []);
 
     // Login
     const login = async (email, password) => {
@@ -29,6 +37,9 @@ export const AuthProvider = ({ children }) => {
         }
 
         localStorage.setItem("workflowx_token", token);
+        if (user.preferences?.timezone) {
+            localStorage.setItem("workflowx_timezone", user.preferences.timezone);
+        }
 
         setUser(user);
 
@@ -51,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
 
         localStorage.removeItem("workflowx_token");
+        localStorage.removeItem("workflowx_timezone");
 
         setUser(null);
     };
@@ -76,6 +88,12 @@ export const AuthProvider = ({ children }) => {
                 const response = await api.get("/auth/me");
 
                 if (active) {
+                    if (response.data.data.preferences?.timezone) {
+                        localStorage.setItem(
+                            "workflowx_timezone",
+                            response.data.data.preferences.timezone
+                        );
+                    }
                     setUser(response.data.data);
                 }
 
@@ -90,6 +108,7 @@ export const AuthProvider = ({ children }) => {
                     localStorage.removeItem(
                         "workflowx_token"
                     );
+                    localStorage.removeItem("workflowx_timezone");
 
                     setUser(null);
                 }
@@ -110,12 +129,43 @@ export const AuthProvider = ({ children }) => {
 
     }, []);
 
+    useEffect(() => {
+        const theme = user?.preferences?.theme || "system";
+        const systemTheme = window.matchMedia?.("(prefers-color-scheme: dark)");
+
+        const applyTheme = () => {
+            const resolvedTheme = theme === "system"
+                ? (systemTheme?.matches ? "dark" : "light")
+                : theme;
+            document.documentElement.dataset.theme = resolvedTheme;
+            document.documentElement.style.colorScheme = resolvedTheme;
+        };
+
+        applyTheme();
+        if (theme === "system" && systemTheme) {
+            systemTheme.addEventListener?.("change", applyTheme);
+        }
+
+        return () => {
+            systemTheme?.removeEventListener?.("change", applyTheme);
+        };
+    }, [user?.preferences?.theme]);
+
+    useEffect(() => {
+        if (user?.preferences?.timezone) {
+            localStorage.setItem("workflowx_timezone", user.preferences.timezone);
+        } else {
+            localStorage.removeItem("workflowx_timezone");
+        }
+    }, [user?.preferences?.timezone]);
+
     return (
 
         <AuthContext.Provider
             value={{
                 user,
                 loading,
+                updateUser,
                 login,
                 register,
                 logout

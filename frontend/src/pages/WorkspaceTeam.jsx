@@ -9,6 +9,7 @@ import {
 import { workspaceTeamService } from "../services/workspaceTeamService";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { can } from "../utils/permissions";
+import { formatDate } from "../utils/date";
 
 const roles = ["admin", "manager", "member", "guest"];
 
@@ -358,7 +359,7 @@ export default function WorkspaceTeam() {
                                     </p>
                                     <p className="text-xs text-slate-500">
                                         {invitation.role} · Expires{" "}
-                                        {new Date(invitation.expiresAt).toLocaleDateString()}
+                                        {formatDate(invitation.expiresAt)}
                                     </p>
                                 </div>
 

@@ -6,6 +6,7 @@ import {
 import {
     X
 } from "lucide-react";
+import { getTodayDateString } from "../../utils/date";
 
 
 const initialForm = {
@@ -39,11 +40,7 @@ export default function ManualTimeModal({
         }
 
 
-        const today =
-            new Date()
-                .toLocaleDateString(
-                    "en-CA"
-                );
+        const today = getTodayDateString();
 
 
         setForm({

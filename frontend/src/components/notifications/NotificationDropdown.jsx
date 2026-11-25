@@ -15,6 +15,7 @@ import {
 import {
     useNotifications
 } from "../../context/NotificationContext";
+import { formatDate } from "../../utils/date";
 
 
 const formatTime = (
@@ -70,10 +71,7 @@ const formatTime = (
     }
 
 
-    return created
-        .toLocaleDateString(
-            "en-IN"
-        );
+    return formatDate(created, "en-IN");
 
 };
 

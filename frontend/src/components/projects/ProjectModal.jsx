@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { getTodayDateString, isPastDate } from "../../utils/date";
 
 const initialForm = {
     name: "",
@@ -38,6 +39,9 @@ export default function ProjectModal({
 
     const [form, setForm] = useState(initialForm);
     const [error, setError] = useState("");
+    const today = getTodayDateString();
+    const originalStartDate = toDateInput(project?.startDate);
+    const originalEndDate = toDateInput(project?.endDate);
 
     useEffect(() => {
 
@@ -65,6 +69,18 @@ export default function ProjectModal({
 
         const { name, value } = event.target;
 
+        const originalDate = name === "startDate" ? originalStartDate : originalEndDate;
+        if (
+            (name === "startDate" || name === "endDate") &&
+            isPastDate(value, today) &&
+            value !== originalDate
+        ) {
+            setError("Past project dates are not allowed.");
+            return;
+        }
+
+        setError("");
+
         setForm((previous) => ({
             ...previous,
             [name]: value
@@ -86,6 +102,14 @@ export default function ProjectModal({
             form.endDate < form.startDate
         ) {
             setError("End date cannot be before start date");
+            return;
+        }
+
+        if (
+            (isPastDate(form.startDate, today) && form.startDate !== originalStartDate) ||
+            (isPastDate(form.endDate, today) && form.endDate !== originalEndDate)
+        ) {
+            setError("Past project dates are not allowed.");
             return;
         }
 
@@ -223,6 +247,7 @@ export default function ProjectModal({
                                 type="date"
                                 name="startDate"
                                 value={form.startDate}
+                                min={isPastDate(originalStartDate, today) && form.startDate === originalStartDate ? originalStartDate : today}
                                 onChange={handleChange}
                                 className="w-full rounded-xl border border-slate-200 px-4 py-3"
                             />
@@ -237,6 +262,7 @@ export default function ProjectModal({
                                 type="date"
                                 name="endDate"
                                 value={form.endDate}
+                                min={isPastDate(originalEndDate, today) && form.endDate === originalEndDate ? originalEndDate : today}
                                 onChange={handleChange}
                                 className="w-full rounded-xl border border-slate-200 px-4 py-3"
                             />

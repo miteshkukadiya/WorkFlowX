@@ -9,10 +9,11 @@ import {
 } from "lucide-react";
 import { projectService } from "../services/projectService";
 import { planningService } from "../services/planningService";
+import { formatDate } from "../utils/date";
 
 const dateValue = value => value ? new Date(value) : null;
 const dateLabel = value => value
-    ? new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })
+    ? formatDate(value, "en-IN", { day: "2-digit", month: "short" })
     : "No date";
 const isoDay = value => value.toISOString().slice(0, 10);
 
@@ -59,7 +60,7 @@ function CalendarView({ tasks }) {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-slate-900">
-                    {month.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
+                    {formatDate(month, "en-IN", { month: "long", year: "numeric" })}
                 </h2>
                 <div className="flex gap-2">
                     <button className="rounded-lg border px-3 py-1.5 text-sm" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>Previous</button>
@@ -113,7 +114,7 @@ function RoadmapView({ tasks }) {
     </div>;
 }
 
-function DependenciesView({ tasks }) {
+function DependenciesView({ tasks, onDependenciesUpdated }) {
     const [selectedId, setSelectedId] = useState(tasks[0]?._id || "");
     const [selectedDependencies, setSelectedDependencies] = useState([]);
     const [saving, setSaving] = useState(false);
@@ -125,36 +126,81 @@ function DependenciesView({ tasks }) {
         setSelectedDependencies(dependencyKey ? dependencyKey.split(",") : []);
     }, [selectedId, dependencyKey]);
 
-    const save = async () => {
+    const persistDependencies = async (taskId, dependencyIds, successMessage) => {
         setSaving(true);
         setMessage("");
         try {
-            await planningService.updateDependencies(selectedId, selectedDependencies);
-            setMessage("Dependencies saved.");
+            const dependencies = await planningService.updateDependencies(taskId, dependencyIds);
+            onDependenciesUpdated(taskId, dependencies);
+            setMessage(successMessage);
         } catch (error) {
-            setMessage(error.response?.data?.message || "Unable to save dependencies.");
+            setMessage(error.response?.data?.message || "Unable to update dependencies.");
         } finally {
             setSaving(false);
         }
     };
 
+    const save = () => persistDependencies(selectedId, selectedDependencies, "Dependencies saved.");
+    const removeDependency = (task, dependencyId) => persistDependencies(
+        task._id,
+        task.dependencies
+            .filter(dependency => dependency._id !== dependencyId)
+            .map(dependency => dependency._id),
+        "Dependency removed."
+    );
+
     return <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Task dependencies</h2>
             <p className="mt-1 text-sm text-slate-500">Choose a task, then select the tasks that must finish first.</p>
-            <select value={selectedId} onChange={event => setSelectedId(event.target.value)} className="mt-5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm">
+            {!tasks.length && <p className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Create a task in this project before configuring dependencies.</p>}
+            <select value={selectedId} onChange={event => setSelectedId(event.target.value)} disabled={!tasks.length} className="mt-5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm disabled:bg-slate-50">
                 {tasks.map(task => <option key={task._id} value={task._id}>{task.title}</option>)}
             </select>
-            <select multiple value={selectedDependencies} onChange={event => setSelectedDependencies([...event.target.selectedOptions].map(option => option.value))} className="mt-3 min-h-48 w-full rounded-xl border border-slate-200 p-2 text-sm">
-                {tasks.filter(task => task._id !== selectedId).map(task => <option key={task._id} value={task._id}>{task.title}</option>)}
-            </select>
+            <div className="mt-3 max-h-48 overflow-y-auto rounded-xl border border-slate-200 p-2">
+                {tasks.filter(task => task._id !== selectedId).map(task => (
+                    <label key={task._id} className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-slate-700 hover:bg-indigo-50">
+                        <input
+                            type="checkbox"
+                            checked={selectedDependencies.includes(task._id)}
+                            onChange={event => setSelectedDependencies(current => event.target.checked
+                                ? [...current, task._id]
+                                : current.filter(id => id !== task._id))}
+                            className="size-4 accent-indigo-600"
+                        />
+                        <span>{task.title}</span>
+                    </label>
+                ))}
+                {tasks.length === 1 && <p className="p-3 text-sm text-slate-500">Add another task to create a dependency.</p>}
+            </div>
             <button disabled={!selectedId || saving} onClick={save} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />{saving ? "Saving..." : "Save dependencies"}</button>
             {message && <p className="mt-3 text-sm text-slate-600">{message}</p>}
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Dependency map</h2>
             <div className="mt-4 space-y-3">
-                {tasks.filter(task => task.dependencies?.length).map(task => <div key={task._id} className="rounded-xl bg-slate-50 p-3"><p className="font-medium text-slate-800">{task.title}</p><p className="mt-1 text-sm text-slate-500">Blocked by: {task.dependencies.map(dependency => dependency.title).join(", ")}</p></div>)}
+                {tasks.filter(task => task.dependencies?.length).map(task => (
+                    <div key={task._id} className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                        <p className="font-semibold text-slate-800">{task.title}</p>
+                        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Depends on</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {task.dependencies.map(dependency => (
+                                <span key={dependency._id} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                                    {dependency.title}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeDependency(task, dependency._id)}
+                                        disabled={saving}
+                                        aria-label={`Remove ${dependency.title} dependency from ${task.title}`}
+                                        className="font-semibold text-red-600 hover:text-red-700 disabled:opacity-50"
+                                    >
+                                        Remove
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                ))}
                 {!tasks.some(task => task.dependencies?.length) && <p className="py-8 text-center text-sm text-slate-500">No dependencies configured yet.</p>}
             </div>
         </div>
@@ -168,6 +214,12 @@ export default function Planning() {
     const [tab, setTab] = useState("calendar");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const handleDependenciesUpdated = (taskId, dependencies) => {
+        setTasks(currentTasks => currentTasks.map(task =>
+            task._id === taskId ? { ...task, dependencies } : task
+        ));
+    };
 
     useEffect(() => {
         projectService.getAll().then(data => {
@@ -202,6 +254,6 @@ export default function Planning() {
         </div>
         <div className="flex flex-wrap gap-2">{tabs.map(([value, Icon, label]) => <button key={value} onClick={() => setTab(value)} className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold ${tab === value ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-600"}`}><Icon size={16} />{label}</button>)}</div>
         {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-        {loading ? <div className="rounded-2xl border bg-white p-12 text-center text-sm text-slate-500">Loading planning data...</div> : !projectId ? <div className="rounded-2xl border bg-white p-12 text-center text-sm text-slate-500">Select a project to begin planning.</div> : tab === "calendar" ? <CalendarView tasks={tasks} /> : tab === "roadmap" ? <RoadmapView tasks={tasks} /> : <DependenciesView tasks={tasks} />}
+        {loading ? <div className="rounded-2xl border bg-white p-12 text-center text-sm text-slate-500">Loading planning data...</div> : !projectId ? <div className="rounded-2xl border bg-white p-12 text-center text-sm text-slate-500">Select a project to begin planning.</div> : tab === "calendar" ? <CalendarView tasks={tasks} /> : tab === "roadmap" ? <RoadmapView tasks={tasks} /> : <DependenciesView tasks={tasks} onDependenciesUpdated={handleDependenciesUpdated} />}
     </div>;
 }

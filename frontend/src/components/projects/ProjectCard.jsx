@@ -4,6 +4,7 @@ import {
     Pencil,
     Trash2
 } from "lucide-react";
+import { formatDate as formatPreferredDate } from "../../utils/date";
 
 const statusStyles = {
     planning: "bg-slate-100 text-slate-600",
@@ -21,7 +22,8 @@ const priorityStyles = {
 const formatDate = (date) => {
     if (!date) return "No deadline";
 
-    return new Date(date).toLocaleDateString(
+    return formatPreferredDate(
+        date,
         "en-IN",
         {
             day: "numeric",

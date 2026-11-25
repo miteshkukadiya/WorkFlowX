@@ -9,6 +9,7 @@ import {
 import {
     Link
 } from "react-router-dom";
+import { formatDate as formatPreferredDate } from "../../utils/date";
 
 const priorityStyles = {
     low: "bg-slate-100 text-slate-600",
@@ -27,7 +28,8 @@ const formatDate = (date) => {
 
     if (!date) return "No deadline";
 
-    return new Date(date).toLocaleDateString(
+    return formatPreferredDate(
+        date,
         "en-IN",
         {
             day: "numeric",

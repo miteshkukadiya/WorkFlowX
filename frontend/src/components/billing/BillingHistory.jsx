@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Receipt, CreditCard, ExternalLink } from "lucide-react";
 
 import { subscriptionService } from "../../services/subscriptionService";
+import { formatDate } from "../../utils/date";
 
 const formatAmount = (amount, currency = "INR") =>
     new Intl.NumberFormat("en-IN", {
@@ -93,10 +94,7 @@ export default function BillingHistory({ refreshKey = 0 }) {
                                             )}
                                         </td>
                                         <td className="p-4">
-                                            {new Date(
-                                                payment.paidAt ||
-                                                payment.createdAt
-                                            ).toLocaleDateString("en-IN")}
+                                            {formatDate(payment.paidAt || payment.createdAt, "en-IN")}
                                         </td>
                                         <td className="p-4 capitalize">
                                             {payment.status}
@@ -132,9 +130,7 @@ export default function BillingHistory({ refreshKey = 0 }) {
                                             "Invoice"}
                                     </p>
                                     <p className="text-xs text-slate-500">
-                                        {new Date(
-                                            invoice.issuedAt
-                                        ).toLocaleDateString("en-IN")}
+                                        {formatDate(invoice.issuedAt, "en-IN")}
                                     </p>
                                 </div>
 

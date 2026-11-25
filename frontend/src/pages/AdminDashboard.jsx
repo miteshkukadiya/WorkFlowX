@@ -3,8 +3,9 @@ import {
     Building2, CreditCard, RefreshCw, ShieldAlert, Users
 } from "lucide-react";
 import { platformAdminService } from "../services/platformAdminService";
+import { formatDate as formatPreferredDate } from "../utils/date";
 
-const formatDate = (value) => value ? new Date(value).toLocaleDateString() : "-";
+const formatDate = (value) => value ? formatPreferredDate(value) : "-";
 const money = (value, currency = "INR") =>
     new Intl.NumberFormat("en-IN", { style: "currency", currency }).format(value || 0);
 

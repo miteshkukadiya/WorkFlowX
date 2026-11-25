@@ -1,6 +1,7 @@
 import {
     Activity
 } from "lucide-react";
+import { formatDate } from "../../utils/date";
 
 
 const formatTime = (
@@ -47,11 +48,7 @@ const formatTime = (
     }
 
 
-    return new Date(
-        date
-    ).toLocaleDateString(
-        "en-IN"
-    );
+    return formatDate(date, "en-IN");
 
 };
 

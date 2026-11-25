@@ -32,6 +32,7 @@ import {
 import {
     useAuth
 } from "../context/AuthContext";
+import { formatDate } from "../utils/date";
 
 import CommentsSection
     from "../components/comments/CommentsSection";
@@ -446,11 +447,7 @@ export default function TaskDetails() {
                         label="Due Date"
                         value={
                             task.dueDate
-                                ? new Date(
-                                    task.dueDate
-                                ).toLocaleDateString(
-                                    "en-IN"
-                                )
+                                ? formatDate(task.dueDate, "en-IN")
                                 : "No deadline"
                         }
                     />

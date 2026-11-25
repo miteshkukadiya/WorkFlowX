@@ -7,6 +7,7 @@ import { projectService } from "../services/projectService";
 
 import TaskFilterBar from "../components/tasks/TaskFilterBar";
 import { savedViewService } from "../services/savedViewService";
+import { formatDate as formatPreferredDate } from "../utils/date";
 
 const defaultFilters = {
     search: "",
@@ -22,7 +23,7 @@ const defaultFilters = {
 
 const formatDate = date =>
     date
-        ? new Date(date).toLocaleDateString("en-IN", {
+        ? formatPreferredDate(date, "en-IN", {
               day: "2-digit",
               month: "short",
               year: "numeric"

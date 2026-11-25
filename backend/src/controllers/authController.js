@@ -130,7 +130,17 @@ const loginUser = asyncHandler( async (req , res) => {
         name : user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        preferences: {
+            theme: user.preferences?.theme || "system",
+            timezone: user.preferences?.timezone || "Asia/Kolkata",
+            notifications: {
+                taskAssigned: user.preferences?.notifications?.taskAssigned ?? true,
+                taskStatusChanged: user.preferences?.notifications?.taskStatusChanged ?? true,
+                comments: user.preferences?.notifications?.comments ?? true,
+                projectInvites: user.preferences?.notifications?.projectInvites ?? true
+            }
+        }
     }
 
     res.status(200).json(
@@ -161,6 +171,17 @@ const getCurrentUser = asyncHandler(async (req , res) => {
         role: user.role,
 
         avatar: user.avatar,
+
+        preferences: {
+            theme: user.preferences?.theme || "system",
+            timezone: user.preferences?.timezone || "Asia/Kolkata",
+            notifications: {
+                taskAssigned: user.preferences?.notifications?.taskAssigned ?? true,
+                taskStatusChanged: user.preferences?.notifications?.taskStatusChanged ?? true,
+                comments: user.preferences?.notifications?.comments ?? true,
+                projectInvites: user.preferences?.notifications?.projectInvites ?? true
+            }
+        },
 
         createdAt: user.createdAt
 

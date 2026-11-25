@@ -14,6 +14,7 @@ import {
 import {
     commentService
 } from "../../services/commentService";
+import { formatDateTime } from "../../utils/date";
 
 
 export default function CommentsSection({
@@ -513,11 +514,7 @@ export default function CommentsSection({
                                                     text-slate-400
                                                 ">
 
-                                                    {new Date(
-                                                        comment.createdAt
-                                                    ).toLocaleString(
-                                                        "en-IN"
-                                                    )}
+                                                    {formatDateTime(comment.createdAt, "en-IN")}
 
                                                 </span>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { X } from "lucide-react";
+import { getTodayDateString, isPastDate } from "../../utils/date";
 
 const initialForm = {
     title: "",
@@ -34,6 +35,8 @@ export default function TaskModal({
     const [form, setForm] = useState(initialForm);
 
     const [error, setError] = useState("");
+    const today = getTodayDateString();
+    const originalDueDate = toDateInput(task?.dueDate);
 
     useEffect(() => {
 
@@ -77,6 +80,13 @@ export default function TaskModal({
 
         const { name, value } = event.target;
 
+        if (name === "dueDate" && isPastDate(value, today) && value !== originalDueDate) {
+            setError("Past due dates are not allowed.");
+            return;
+        }
+
+        setError("");
+
         setForm((previous) => ({
 
             ...previous,
@@ -109,6 +119,11 @@ export default function TaskModal({
 
             return;
 
+        }
+
+        if (isPastDate(form.dueDate, today) && form.dueDate !== originalDueDate) {
+            setError("Past due dates are not allowed.");
+            return;
         }
 
         setError("");
@@ -379,6 +394,7 @@ export default function TaskModal({
                                 type="date"
                                 name="dueDate"
                                 value={form.dueDate}
+                                min={isPastDate(originalDueDate, today) && form.dueDate === originalDueDate ? originalDueDate : today}
                                 onChange={handleChange}
                                 className="w-full rounded-xl border border-slate-200 px-4 py-3"
                             />

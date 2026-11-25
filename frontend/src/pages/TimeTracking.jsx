@@ -22,6 +22,7 @@ import {
 import {
     useAuth
 } from "../context/AuthContext";
+import { formatDate } from "../utils/date";
 
 import ActiveTimer
     from "../components/time/ActiveTimer";
@@ -610,11 +611,7 @@ export default function TimeTracking() {
                                             </span>
 
                                             <span>
-                                                {new Date(
-                                                    entry.startTime
-                                                ).toLocaleDateString(
-                                                    "en-IN"
-                                                )}
+                                                {formatDate(entry.startTime, "en-IN")}
                                             </span>
 
                                             <span className="capitalize">

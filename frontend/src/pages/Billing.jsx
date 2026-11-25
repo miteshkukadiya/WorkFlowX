@@ -11,6 +11,7 @@ import { subscriptionService } from "../services/subscriptionService";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { razorpayService } from "../services/razorpayService";
 import { loadRazorpay } from "../utils/loadRazorpay";
+import { formatDate } from "../utils/date";
 import BillingHistory from "../components/billing/BillingHistory";
 
 function getRazorpayPaymentErrorMessage(error, testMode) {
@@ -355,9 +356,7 @@ export default function Billing() {
                     {subscription.currentPeriodEnd && (
                         <p className="mt-2 text-sm text-slate-500">
                             Current period ends:{" "}
-                            {new Date(
-                                subscription.currentPeriodEnd
-                            ).toLocaleDateString()}
+                            {formatDate(subscription.currentPeriodEnd)}
                         </p>
                     )}
 

@@ -17,6 +17,7 @@ import {
 import {
     attachmentService
 } from "../../services/attachmentService";
+import { formatDate } from "../../utils/date";
 
 import {
     formatFileSize
@@ -543,13 +544,7 @@ export default function AttachmentsSection({
                                                     {" • "}
 
                                                     {
-                                                        new Date(
-                                                            attachment
-                                                                .createdAt
-                                                        )
-                                                            .toLocaleDateString(
-                                                                "en-IN"
-                                                            )
+                                                        formatDate(attachment.createdAt, "en-IN")
                                                     }
 
                                                 </p>

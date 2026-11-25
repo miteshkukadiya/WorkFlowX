@@ -2,6 +2,7 @@ import {
     CalendarDays,
     Clock3
 } from "lucide-react";
+import { formatDate } from "../../utils/date";
 
 
 export default function TaskDragPreview({
@@ -51,11 +52,7 @@ export default function TaskDragPreview({
                     <CalendarDays size={14} />
 
                     {task.dueDate
-                        ? new Date(
-                            task.dueDate
-                        ).toLocaleDateString(
-                            "en-IN"
-                        )
+                        ? formatDate(task.dueDate, "en-IN")
                         : "No deadline"}
 
                 </span>

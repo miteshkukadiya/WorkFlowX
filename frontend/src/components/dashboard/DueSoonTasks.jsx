@@ -6,6 +6,7 @@ import {
 import {
     useNavigate
 } from "react-router-dom";
+import { formatDate as formatPreferredDate } from "../../utils/date";
 
 
 const formatDate = (
@@ -17,9 +18,8 @@ const formatDate = (
     }
 
 
-    return new Date(
-        date
-    ).toLocaleDateString(
+    return formatPreferredDate(
+        date,
         "en-IN",
         {
             day:

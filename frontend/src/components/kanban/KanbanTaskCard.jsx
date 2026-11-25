@@ -11,6 +11,7 @@ import {
     Clock3,
     GripVertical
 } from "lucide-react";
+import { formatDate as formatPreferredDate } from "../../utils/date";
 
 
 const priorityStyles = {
@@ -36,14 +37,14 @@ const formatDate = (date) => {
         return "No deadline";
     }
 
-    return new Date(date)
-        .toLocaleDateString(
-            "en-IN",
-            {
-                day: "numeric",
-                month: "short"
-            }
-        );
+    return formatPreferredDate(
+        date,
+        "en-IN",
+        {
+            day: "numeric",
+            month: "short"
+        }
+    );
 };
 
 

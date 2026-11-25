@@ -6,6 +6,7 @@ import {
 import {
     useNavigate
 } from "react-router-dom";
+import { formatDate } from "../../utils/date";
 
 
 export default function OverdueTasks({
@@ -157,12 +158,7 @@ export default function OverdueTasks({
                         ">
 
                             {
-                                new Date(
-                                    task.dueDate
-                                )
-                                    .toLocaleDateString(
-                                        "en-IN"
-                                    )
+                                formatDate(task.dueDate, "en-IN")
                             }
 
                         </span>

@@ -2,6 +2,7 @@ import {
     Activity,
     Circle
 } from "lucide-react";
+import { formatDate } from "../../utils/date";
 
 
 const formatTime = (
@@ -45,7 +46,8 @@ const formatTime = (
     }
 
 
-    return value.toLocaleDateString(
+    return formatDate(
+        value,
         "en-IN",
         {
             day: "numeric",

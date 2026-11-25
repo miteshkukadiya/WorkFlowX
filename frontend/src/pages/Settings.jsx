@@ -10,6 +10,7 @@ import { settingsService } from "../services/settingsService";
 import ProfileSettings from "../components/settings/ProfileSettings";
 import SecuritySettings from "../components/settings/SecuritySettings";
 import PreferencesSettings from "../components/settings/PreferencesSettings";
+import { useAuth } from "../context/AuthContext";
 
 const tabs = [
     { id: "profile", label: "Profile", icon: UserRound },
@@ -18,10 +19,16 @@ const tabs = [
 ];
 
 export default function Settings() {
-    const [activeTab, setActiveTab] = useState("profile");
+    const [activeTab, setActiveTab] = useState("preferences");
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const { updateUser } = useAuth();
+
+    const handleProfileUpdated = (updatedProfile) => {
+        setProfile(updatedProfile);
+        updateUser(updatedProfile);
+    };
 
     useEffect(() => {
         let active = true;
@@ -32,6 +39,7 @@ export default function Settings() {
 
                 if (active) {
                     setProfile(data);
+                    updateUser(data);
                 }
             } catch (err) {
                 if (active) {
@@ -52,7 +60,7 @@ export default function Settings() {
         return () => {
             active = false;
         };
-    }, []);
+    }, [updateUser]);
 
     if (loading) {
         return (
@@ -102,7 +110,7 @@ export default function Settings() {
             {activeTab === "profile" && (
                 <ProfileSettings
                     profile={profile}
-                    onUpdated={setProfile}
+                    onUpdated={handleProfileUpdated}
                 />
             )}
 
@@ -113,7 +121,7 @@ export default function Settings() {
             {activeTab === "preferences" && (
                 <PreferencesSettings
                     profile={profile}
-                    onUpdated={setProfile}
+                    onUpdated={handleProfileUpdated}
                 />
             )}
         </div>

@@ -3,6 +3,7 @@ import { ScrollText } from "lucide-react";
 
 import { auditService } from "../services/auditService";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { formatDateTime } from "../utils/date";
 
 export default function WorkspaceAuditLogs() {
     const { activeWorkspace } = useWorkspace();
@@ -89,7 +90,7 @@ export default function WorkspaceAuditLogs() {
                         {logs.map(log => (
                             <tr key={log._id}>
                                 <td className="px-5 py-4 text-slate-500">
-                                    {new Date(log.createdAt).toLocaleString()}
+                                    {formatDateTime(log.createdAt)}
                                 </td>
 
                                 <td className="px-5 py-4">
