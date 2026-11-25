@@ -1,5 +1,8 @@
 import "dotenv/config";
-import { isSmtpConfigured, verifySmtpConnection } from "../src/services/email.service.js";
+import {
+    isSmtpConfigured,
+    verifySmtpConnection
+} from "../src/services/email.service.js";
 
 if (!isSmtpConfigured()) {
     console.error("SMTP is incomplete. Set the SMTP variables listed in backend/.env.example.");

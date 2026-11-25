@@ -188,7 +188,7 @@ export const createInvitation = async (req, res, next) => {
         return res.status(201).json({
             success: true,
             message: emailSent
-                ? "Invitation email accepted by the mail server. Check Inbox and Spam/Junk if it is not visible."
+                ? "Invitation email accepted by the SMTP server. Check Inbox and Spam/Junk if it is not visible."
                 : "Invitation created, but email is unavailable. Share the development link below.",
             data: {
                 _id: invitation._id,
@@ -263,13 +263,13 @@ export const resendInvitation = async (req, res, next) => {
             console.error("Invitation email resend failed:", error.message);
             return res.status(503).json({
                 success: false,
-                message: "Invitation email could not be sent. Check SMTP configuration and try again."
+                message: "Invitation email could not be sent. Check the SMTP configuration and try again."
             });
         }
 
         return res.json({
             success: true,
-            message: "Invitation email accepted by the mail server. Check Inbox and Spam/Junk if it is not visible.",
+            message: "Invitation email accepted by the SMTP server. Check Inbox and Spam/Junk if it is not visible.",
             data: {
                 _id: invitation._id,
                 email: invitation.email,
