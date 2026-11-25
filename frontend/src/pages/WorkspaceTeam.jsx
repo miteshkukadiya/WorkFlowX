@@ -136,10 +136,11 @@ export default function WorkspaceTeam() {
             setInvitationUrl("");
             setInvitations(await workspaceTeamService.getInvitations());
         } catch (err) {
-            setError(
-                err.response?.data?.message ||
-                "Unable to resend invitation email"
-            );
+            const errorMessage = err.code === "ECONNABORTED"
+                ? "The email request timed out. Check the backend SMTP logs before retrying."
+                : err.response?.data?.message ||
+                    "Unable to resend invitation email";
+            setError(errorMessage);
         } finally {
             setResendingInvitationId("");
         }

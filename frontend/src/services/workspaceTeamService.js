@@ -43,7 +43,9 @@ export const workspaceTeamService = {
 
     resendInvitation: async (id) => {
         const response = await api.post(
-            `/workspace-invitations/${id}/resend`
+            `/workspace-invitations/${id}/resend`,
+            {},
+            { timeout: 45_000 }
         );
         return response.data;
     },
