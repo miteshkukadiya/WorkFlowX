@@ -6,6 +6,7 @@ import Organization from "../models/Organization.js";
 import OrganizationMember from "../models/OrganizationMember.js";
 import OrganizationInvitation from "../models/OrganizationInvitation.js";
 import cacheService from "../../services/cache.service.js";
+import { sendEmail } from "../services/email.service.js";
 import { WORKSPACE_LIMITS } from "../config/workspaceLimits.js";
 
 const hashToken = (token) =>
@@ -13,6 +14,34 @@ const hashToken = (token) =>
 
 const normalizeEmail = (email) =>
     email.trim().toLowerCase();
+
+const escapeHtml = (value) =>
+    String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+    })[character]);
+
+const sendInvitationEmail = async ({ email, role, workspaceName, token }) => {
+    const frontendUrl = process.env.FRONTEND_URL.replace(/\/+$/, "");
+    const invitationUrl =
+        `${frontendUrl}/invitations/accept?token=${token}`;
+    const emailText = [
+        `You have been invited to join ${workspaceName} on WorkFlowX.`,
+        `Role: ${role}`,
+        "This invitation expires in 7 days.",
+        `Accept the invitation: ${invitationUrl}`
+    ].join("\n\n");
+
+    return sendEmail({
+        to: email,
+        subject: `Invitation to join ${workspaceName} on WorkFlowX`,
+        text: emailText,
+        html: `<p>You have been invited to join <strong>${escapeHtml(workspaceName)}</strong> on WorkFlowX.</p><p>Role: ${escapeHtml(role)}</p><p>This invitation expires in 7 days.</p><p><a href="${invitationUrl}">Accept invitation</a></p>`
+    });
+};
 
 // POST /api/v1/workspace-invitations
 export const createInvitation = async (req, res, next) => {
@@ -127,17 +156,46 @@ export const createInvitation = async (req, res, next) => {
 
         // DEVELOPMENT ONLY:
         // The invitation URL must be emailed privately in production.
+        const frontendUrl = process.env.FRONTEND_URL.replace(/\/+$/, "");
         const invitationUrl =
-            `${process.env.FRONTEND_URL}/invitations/accept?token=${token}`;
+            `${frontendUrl}/invitations/accept?token=${token}`;
+
+        const organization = await Organization.findById(organizationId)
+            .select("name")
+            .lean();
+        const workspaceName = organization?.name || "a WorkFlowX workspace";
+
+        let emailSent = false;
+        try {
+            emailSent = await sendInvitationEmail({
+                email: normalizedEmail,
+                role,
+                workspaceName,
+                token
+            });
+        } catch (error) {
+            console.error("Invitation email delivery failed:", error.message);
+        }
+
+        if (!emailSent && process.env.NODE_ENV === "production") {
+            await invitation.deleteOne();
+            return res.status(503).json({
+                success: false,
+                message: "Invitation email could not be sent. Check the SMTP configuration and try again."
+            });
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Invitation created",
+            message: emailSent
+                ? "Invitation email accepted by the mail server. Check Inbox and Spam/Junk if it is not visible."
+                : "Invitation created, but email is unavailable. Share the development link below.",
             data: {
                 _id: invitation._id,
                 email: invitation.email,
                 role: invitation.role,
                 expiresAt: invitation.expiresAt,
+                emailSent,
                 ...(process.env.NODE_ENV !== "production"
                     ? { invitationUrl }
                     : {})
@@ -149,12 +207,88 @@ export const createInvitation = async (req, res, next) => {
     }
 };
 
+// POST /api/v1/workspace-invitations/:id/resend
+export const resendInvitation = async (req, res, next) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid invitation ID"
+            });
+        }
+
+        const token = crypto.randomBytes(32).toString("hex");
+        const invitation = await OrganizationInvitation.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                organization: req.tenant.organizationId,
+                status: "pending",
+                expiresAt: { $gt: new Date() }
+            },
+            {
+                $set: {
+                    tokenHash: hashToken(token),
+                    expiresAt: new Date(
+                        Date.now() + 7 * 24 * 60 * 60 * 1000
+                    )
+                }
+            },
+            { new: true }
+        );
+
+        if (!invitation) {
+            return res.status(404).json({
+                success: false,
+                message: "Active pending invitation not found"
+            });
+        }
+
+        const organization = await Organization.findById(
+            invitation.organization
+        ).select("name").lean();
+        const workspaceName = organization?.name || "a WorkFlowX workspace";
+
+        try {
+            const emailSent = await sendInvitationEmail({
+                email: invitation.email,
+                role: invitation.role,
+                workspaceName,
+                token
+            });
+
+            if (!emailSent) {
+                throw new Error("SMTP configuration is incomplete");
+            }
+        } catch (error) {
+            console.error("Invitation email resend failed:", error.message);
+            return res.status(503).json({
+                success: false,
+                message: "Invitation email could not be sent. Check SMTP configuration and try again."
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Invitation email accepted by the mail server. Check Inbox and Spam/Junk if it is not visible.",
+            data: {
+                _id: invitation._id,
+                email: invitation.email,
+                expiresAt: invitation.expiresAt,
+                emailSent: true
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // GET /api/v1/workspace-invitations
 export const getInvitations = async (req, res, next) => {
     try {
         const invitations = await OrganizationInvitation.find({
             organization: req.tenant.organizationId,
-            status: "pending"
+            status: "pending",
+            expiresAt: { $gt: new Date() }
         })
             .select("email role expiresAt invitedBy createdAt")
             .sort({ createdAt: -1 })

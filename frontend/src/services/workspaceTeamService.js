@@ -41,6 +41,13 @@ export const workspaceTeamService = {
         return response.data;
     },
 
+    resendInvitation: async (id) => {
+        const response = await api.post(
+            `/workspace-invitations/${id}/resend`
+        );
+        return response.data;
+    },
+
     acceptInvitation: async (token) => {
         const response = await api.post(
             "/workspace-invitations/accept",

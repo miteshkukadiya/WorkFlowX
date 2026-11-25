@@ -31,6 +31,27 @@ const envSchema = z.object({
     CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
     CLOUDINARY_API_KEY: z.string().min(1).optional(),
     CLOUDINARY_API_SECRET: z.string().min(1).optional()
+}).superRefine((values, context) => {
+    const smtpKeys = [
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "EMAIL_FROM"
+    ];
+    const configuredCount = smtpKeys.filter(key => Boolean(values[key])).length;
+    const smtpConfigured = configuredCount === smtpKeys.length;
+
+    if (
+        (configuredCount > 0 && !smtpConfigured) ||
+        (values.NODE_ENV === "production" && !smtpConfigured)
+    ) {
+        context.addIssue({
+            code: "custom",
+            path: ["SMTP_HOST"],
+            message: "Configure SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD and EMAIL_FROM together; SMTP is required in production."
+        });
+    }
 });
 
 const result = envSchema.safeParse(process.env);

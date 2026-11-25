@@ -3,7 +3,8 @@ import { ArrowRight, LockKeyhole } from "lucide-react";
 import {useState} from "react";
 import {
     Link,
-    useNavigate
+    useNavigate,
+    useLocation
 } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +14,7 @@ import { useAuth } from "../context/AuthContext";
 const Login = () => {
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const {
         login
@@ -65,7 +67,7 @@ const Login = () => {
 
         console.log("Logged in user:", user);
 
-        navigate("/", {
+        navigate(location.state?.from || "/", {
             replace: true
         });
 
@@ -275,6 +277,7 @@ const Login = () => {
 
                                 <Link
                                     to="/register"
+                                    state={{ from: location.state?.from }}
                                     className="font-semibold text-slate-900 hover:underline"
                                 >
                                     Create one

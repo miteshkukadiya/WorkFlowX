@@ -1,4 +1,4 @@
-import { Link , useNavigate} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useState } from "react";
 
@@ -11,6 +11,7 @@ import {useAuth} from "../context/AuthContext";
 const Register = () => {
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { register } = useAuth();
 
@@ -67,7 +68,10 @@ const Register = () => {
 
             setTimeout(() => {
 
-                navigate("/login");
+                navigate("/login", {
+                    state: { from: location.state?.from },
+                    replace: true
+                });
 
             }, 1200);
 
@@ -237,6 +241,7 @@ const Register = () => {
 
                         <Link
                             to="/login"
+                            state={{ from: location.state?.from }}
                             className="font-semibold text-slate-900 hover:underline"
                         >
                             Sign in

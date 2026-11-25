@@ -8,6 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "vitest run",
+    "email:verify": "node scripts/verifySmtp.mjs",
     "seed:plans": "node scripts/seedPlans.js",
     "initialize:subscriptions": "node scripts/initializeSubscriptions.js",
     "link:razorpay": "node scripts/linkRazorpayPlans.js"

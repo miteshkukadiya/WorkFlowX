@@ -8,6 +8,7 @@ import {
     createInvitation,
     getInvitations,
     acceptInvitation,
+    resendInvitation,
     revokeInvitation
 } from "../controllers/invitation.controller.js";
 
@@ -29,6 +30,7 @@ router.post("/",
                 createInvitation
             );
 router.get("/", getInvitations);
+router.post("/:id/resend", resendInvitation);
 router.delete("/:id", revokeInvitation);
 
 export default router;

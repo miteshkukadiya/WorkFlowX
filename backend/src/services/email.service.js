@@ -17,10 +17,15 @@ const getTransporter = () => {
     }
 
     if (!transporter) {
+        const secure = process.env.SMTP_SECURE === "true";
         transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: Number(process.env.SMTP_PORT),
-            secure: process.env.SMTP_SECURE === "true",
+            secure,
+            requireTLS: !secure,
+            tls: {
+                minVersion: "TLSv1.2"
+            },
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASSWORD
@@ -31,6 +36,18 @@ const getTransporter = () => {
     return transporter;
 };
 
+export const isSmtpConfigured = smtpConfigured;
+
+export const verifySmtpConnection = async () => {
+    const mailer = getTransporter();
+
+    if (!mailer) {
+        throw new Error("SMTP configuration is incomplete");
+    }
+
+    await mailer.verify();
+};
+
 export const sendEmail = async ({ to, subject, text, html }) => {
     const mailer = getTransporter();
 
@@ -39,7 +56,7 @@ export const sendEmail = async ({ to, subject, text, html }) => {
         return false;
     }
 
-    await mailer.sendMail({
+    const result = await mailer.sendMail({
         from: process.env.EMAIL_FROM,
         to,
         subject,
@@ -47,7 +64,18 @@ export const sendEmail = async ({ to, subject, text, html }) => {
         html
     });
 
+    const accepted = result.accepted?.some(recipient => {
+        const address = typeof recipient === "string"
+            ? recipient
+            : recipient.address;
+        return address?.toLowerCase() === to.toLowerCase();
+    });
+
+    if (!accepted) {
+        throw new Error("SMTP server did not accept the email recipient");
+    }
+
     return true;
 };
 
-export default { sendEmail };
+export default { sendEmail, isSmtpConfigured, verifySmtpConnection };

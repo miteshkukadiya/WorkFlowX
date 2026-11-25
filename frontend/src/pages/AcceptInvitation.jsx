@@ -24,12 +24,11 @@ export default function AcceptInvitation() {
             setLoading(true);
             setError("");
 
-            await workspaceTeamService.acceptInvitation(token);
+            const result = await workspaceTeamService.acceptInvitation(token);
 
-            await refreshWorkspaces();
+            await refreshWorkspaces(result.data?.organizationId);
 
-            // The user can select the new workspace from the switcher.
-            navigate("/dashboard", { replace: true });
+            navigate("/", { replace: true });
         } catch (err) {
             setError(
                 err.response?.data?.message ||

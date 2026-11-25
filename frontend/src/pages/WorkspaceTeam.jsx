@@ -25,6 +25,8 @@ export default function WorkspaceTeam() {
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
     const [invitationUrl, setInvitationUrl] = useState("");
+    const [invitationEmailSent, setInvitationEmailSent] = useState(false);
+    const [resendingInvitationId, setResendingInvitationId] = useState("");
 
     // const canManage = ["owner", "admin"].includes(
     //     activeWorkspace?.myRole
@@ -95,6 +97,7 @@ export default function WorkspaceTeam() {
             setError("");
             setMessage("");
             setInvitationUrl("");
+            setInvitationEmailSent(false);
 
             const result = await workspaceTeamService.invite(
                 email,
@@ -102,7 +105,8 @@ export default function WorkspaceTeam() {
             );
 
             setEmail("");
-            setMessage("Invitation created successfully.");
+            setMessage(result.message || "Invitation sent successfully.");
+            setInvitationEmailSent(Boolean(result.data?.emailSent));
 
             // Development-only link; production uses email delivery.
             setInvitationUrl(result.data?.invitationUrl || "");
@@ -116,6 +120,28 @@ export default function WorkspaceTeam() {
             );
         } finally {
             setSaving(false);
+        }
+    };
+
+    const resendInvitation = async (invitationId) => {
+        try {
+            setResendingInvitationId(invitationId);
+            setError("");
+
+            const result = await workspaceTeamService.resendInvitation(
+                invitationId
+            );
+            setMessage(result.message);
+            setInvitationEmailSent(true);
+            setInvitationUrl("");
+            setInvitations(await workspaceTeamService.getInvitations());
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                "Unable to resend invitation email"
+            );
+        } finally {
+            setResendingInvitationId("");
         }
     };
 
@@ -191,7 +217,7 @@ export default function WorkspaceTeam() {
             )}
 
             {message && (
-                <p role="status" className="rounded-xl bg-green-50 p-4 text-sm text-green-700">
+                <p role="status" className={`rounded-xl p-4 text-sm ${invitationUrl && !invitationEmailSent ? "bg-amber-50 text-amber-800" : "bg-green-50 text-green-700"}`}>
                     {message}
                 </p>
             )}
@@ -204,6 +230,9 @@ export default function WorkspaceTeam() {
                             Invite Team Member
                         </h2>
                     </div>
+                    <p className="mb-4 text-sm text-slate-500">
+                        The invitee must open the email and accept using an account with the same email address. Pending invites remain here until accepted, revoked, or expired.
+                    </p>
 
                     <form
                         onSubmit={sendInvitation}
@@ -250,8 +279,15 @@ export default function WorkspaceTeam() {
                     </form>
 
                     {invitationUrl && (
-                        <div className="mt-4 break-all rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
-                            Development-only invitation link: {invitationUrl}
+                        <div className="mt-4 break-all rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                            <p>
+                                {invitationEmailSent
+                                    ? "Email sent. You can also share this development link:"
+                                    : "Email was unavailable. Share this development link with the invitee:"}
+                            </p>
+                            <a className="mt-1 inline-block underline" href={invitationUrl}>
+                                Open invitation
+                            </a>
                         </div>
                     )}
                 </div>
@@ -346,6 +382,9 @@ export default function WorkspaceTeam() {
                         <Mail size={19} className="text-indigo-600" />
                         <h2 className="font-bold">Pending Invitations</h2>
                     </div>
+                    <p className="mb-4 text-sm text-slate-500">
+                        Recipients accept from the email link after signing in or registering with the invited email address.
+                    </p>
 
                     <div className="space-y-3">
                         {invitations.map(invitation => (
@@ -363,28 +402,39 @@ export default function WorkspaceTeam() {
                                     </p>
                                 </div>
 
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            await workspaceTeamService.revokeInvitation(
-                                                invitation._id
-                                            );
-                                            setInvitations(previous =>
-                                                previous.filter(item =>
-                                                    item._id !== invitation._id
-                                                )
-                                            );
-                                        } catch (err) {
-                                            setError(
-                                                err.response?.data?.message ||
-                                                "Unable to revoke invitation"
-                                            );
-                                        }
-                                    }}
-                                    className="text-sm font-semibold text-red-600"
-                                >
-                                    Revoke
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={() => resendInvitation(invitation._id)}
+                                        disabled={Boolean(resendingInvitationId)}
+                                        className="text-sm font-semibold text-indigo-600 disabled:opacity-50"
+                                    >
+                                        {resendingInvitationId === invitation._id
+                                            ? "Sending..."
+                                            : "Resend email"}
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await workspaceTeamService.revokeInvitation(
+                                                    invitation._id
+                                                );
+                                                setInvitations(previous =>
+                                                    previous.filter(item =>
+                                                        item._id !== invitation._id
+                                                    )
+                                                );
+                                            } catch (err) {
+                                                setError(
+                                                    err.response?.data?.message ||
+                                                    "Unable to revoke invitation"
+                                                );
+                                            }
+                                        }}
+                                        className="text-sm font-semibold text-red-600"
+                                    >
+                                        Revoke
+                                    </button>
+                                </div>
                             </div>
                         ))}
 
